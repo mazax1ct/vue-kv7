@@ -1,0 +1,106 @@
+@import "bootstrap/scss/bootstrap";
+
+html,
+body,
+#app {
+  min-height: 100dvh;
+}
+
+#app {
+  display: flex;
+  flex-direction: column;
+}
+
+main {
+  flex-grow: 1;
+}
+
+header,
+footer {
+  flex-shrink: 0;
+}
+
+body {
+    font-size: 12px;
+}
+
+.form-control {
+    font-size: 12px;
+}
+
+#example th {
+    vertical-align: top;
+}
+
+.login-form {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 30px;
+    background: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+.botcheck {
+    color: red;
+}
+
+.work-time-table td {
+    padding: 0.3rem 0.75rem;
+}
+
+.work-time-table.table-hover table tbody tr:hover {
+    background-color: transparent;
+}
+
+.work-time-table table {
+    max-width: 364px;
+}
+
+.table .work-time-table-table-cell {
+    padding: 0;
+    width: 364px;
+}
+
+.work-time-table-table-cell table td {
+    border-right: none;
+    border-top: none;
+    height: 42px;
+}
+
+.work-time-table-table-cell table td:first-child {
+    border-left: none;
+}
+
+.work-time-table-table-cell table tr:last-child td {
+    border-bottom: none;
+}
+
+.work-time-table-time-cell {
+    width: 120px;
+}
+
+.work-time-table-button-cell {
+    width: 32px;
+}
+
+.form-check-input--fix {
+    margin-top: 0.2rem;
+}
+
+.hidden-block {
+    display: none;
+}
+
+.js_notice_delete {
+    position: absolute;
+    bottom: -55px;
+}
+
+header, footer {
+    font-size: 14px;
+}
+
+footer {
+    background-color: #f5f5f5;
+}
