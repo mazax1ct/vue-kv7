@@ -2,6 +2,7 @@
 import { onMounted, ref } from 'vue'
 import axios from 'axios'
 import AdminLayout from '@/layouts/AdminLayout.vue'
+import TableDateSelect from '@/components/TableDateSelect.vue'
 
 import DataTable from 'datatables.net-vue3'
 import DataTablesLib from 'datatables.net-bs5'
@@ -9,13 +10,21 @@ import 'datatables.net-buttons'
 import 'datatables.net-buttons/js/buttons.html5'
 import jszip from 'jszip'
 import pdfmake from 'pdfmake'
+import moment from 'moment'
 
 DataTable.use(DataTablesLib)
 DataTablesLib.Buttons.jszip(jszip)
 DataTablesLib.Buttons.pdfMake(pdfmake)
 
 const columns = [
-  { data: 'date', title: 'Дата' },
+  {
+    data: 'date',
+    title: 'Дата',
+    type: Date,
+    render: function (data, type, row) {
+      return moment.unix(data).format('DD.MM.YYYY')
+    },
+  },
   { data: 'day', title: 'День недели' },
   { data: 'location', title: 'Местоположение' },
   { data: 'name', title: 'ФИО' },
@@ -31,7 +40,7 @@ const columns = [
 ]
 
 const options = {
-  responsive: true,
+  responsive: false,
   select: false,
   ordering: true,
   searching: false,
@@ -74,59 +83,6 @@ const options = {
         },
       ],
     },
-    initComplete: function () {
-      let api = this.api()
-
-      console.log(api)
-      /*api.columns().every(function (index) {
-        var column = this
-        if (index > 1 && index != 6 && index != 7) {
-          var select = $(
-            '<select class="form-control mt-1" style="display: block; width: auto;"><option value=""></option></select>',
-          )
-            .appendTo($(column.header()))
-            .on('change', function () {
-              var val = $.fn.dataTable.util.escapeRegex($(this).val())
-
-              column.search(val ? '^' + val + '$' : '', true, false).draw()
-            })
-            .on('click', function (event) {
-              event.stopPropagation()
-              event.preventDefault()
-            })
-
-          column
-            .data()
-            .unique()
-            .sort()
-            .each(function (d, j) {
-              select.append('<option value="' + d + '">' + d + '</option>')
-            })
-        }
-        if (index == 1) {
-          var select = $(
-            '<select class="form-control mt-1" style="display: block; width: auto;"><option value=""></option></select>',
-          )
-            .appendTo($(column.header()))
-            .on('change', function () {
-              var val = $.fn.dataTable.util.escapeRegex($(this).val())
-
-              column.search(val ? '^' + val + '$' : '', true, false).draw()
-            })
-            .on('click', function (event) {
-              event.stopPropagation()
-              event.preventDefault()
-            })
-          select.append('<option value="Понедельник">Понедельник</option>')
-          select.append('<option value="Вторник">Вторник</option>')
-          select.append('<option value="Среда">Среда</option>')
-          select.append('<option value="Четверг">Четверг</option>')
-          select.append('<option value="Пятница">Пятница</option>')
-          select.append('<option value="Суббота">Суббота</option>')
-          select.append('<option value="Воскресенье">Воскресенье</option>')
-        }
-      })*/
-    },
   },
 }
 
@@ -138,7 +94,11 @@ const marks = ref([])
 
 const getMarks = function () {
   axios
-    .get('http://localhost:3000/marks')
+  //1765929600 17
+  //1766016000 18
+  //1766188800 20
+
+    .get('http://localhost:3000/marks?date_gte=1765929600&date_lte=1766188800')
     .then((res) => {
       marks.value = res.data
     })
@@ -149,35 +109,7 @@ const getMarks = function () {
 
 <template>
   <AdminLayout>
-    <form class="d-flex align-items-center gap-3 mb-3" id="mainform" method="POST">
-      <div class="form-group d-flex align-items-center gap-2">
-        <label for="dateStart" class="text-nowrap">Дата начала:</label>
-        <input
-          type="input"
-          class="form-control dpicker"
-          id="dateStart"
-          name="dateStart"
-          placeholder="дд.мм.гггг"
-          value="22.12.2025"
-        />
-      </div>
-
-      <div class="form-group d-flex align-items-center gap-2">
-        <label for="dateEnd" class="text-nowrap">Дата окончания:</label>
-        <input
-          type="input"
-          class="form-control dpicker"
-          id="dateEnd"
-          name="dateEnd"
-          placeholder="дд.мм.гггг"
-          value="22.12.2025"
-        />
-      </div>
-
-      <input name="page" id="pagerInput" value="1" type="hidden" />
-
-      <button class="btn btn-primary" type="submit">Получить данные</button>
-    </form>
+    <TableDateSelect :start="new Date()" :end="new Date()" />
 
     <DataTable
       class="fs table table-bordered table-td-vertical-align-middle mb-0"
