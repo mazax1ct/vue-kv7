@@ -9,19 +9,16 @@ import DataTablesLib from 'datatables.net-bs5'
 import 'datatables.net-buttons'
 import 'datatables.net-buttons/js/buttons.html5'
 import jszip from 'jszip'
-import pdfmake from 'pdfmake'
 import moment from 'moment'
 
 DataTable.use(DataTablesLib)
 DataTablesLib.Buttons.jszip(jszip)
-DataTablesLib.Buttons.pdfMake(pdfmake)
 
 const columns = [
   {
     data: 'date',
     title: 'Дата',
-    type: Date,
-    render: function (data, type, row) {
+    render: function (data) {
       return moment.unix(data).format('DD.MM.YYYY')
     },
   },
@@ -86,30 +83,43 @@ const options = {
   },
 }
 
-onMounted(() => {
-  getMarks()
-})
-
 const marks = ref([])
 
-const getMarks = function () {
-  axios
-  //1765929600 17
-  //1766016000 18
-  //1766188800 20
+const rangeStart = ref(new Date())
 
-    .get('http://localhost:3000/marks?date_gte=1765929600&date_lte=1766188800')
-    .then((res) => {
-      marks.value = res.data
-    })
-    .catch()
-    .finally()
+const rangeEnd = ref(new Date())
+
+function recieveDatesRange(range) {
+  rangeStart.value = range.start
+  rangeEnd.value = range.end
+  getMarks()
 }
+
+const getMarks = async () => {
+  let params = {
+    date_gte: moment(rangeStart.value, 'DD-MM-YYYY').unix(),
+    date_lte: moment(rangeEnd.value, 'DD-MM-YYYY').unix(),
+  }
+
+  try {
+    const { data } = await axios.get(
+      `http://localhost:3000/marks?date_gte=${params.date_gte}&date_lte=${params.date_lte}`,
+    )
+
+    marks.value = data
+  } catch (error) {
+    console.error('Failed to fetch data:', error)
+  }
+}
+
+onMounted(async () => {
+  await getMarks()
+})
 </script>
 
 <template>
   <AdminLayout>
-    <TableDateSelect :start="new Date()" :end="new Date()" />
+    <TableDateSelect @sendDatesRange="recieveDatesRange" :start="rangeStart" :end="rangeEnd" />
 
     <DataTable
       class="fs table table-bordered table-td-vertical-align-middle mb-0"
