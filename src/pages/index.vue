@@ -14,6 +14,7 @@ const marks = ref([])
 
 const filters = ref({
   day: { value: null, matchMode: FilterMatchMode.EQUALS },
+  location: { value: null, matchMode: FilterMatchMode.EQUALS },
 })
 
 const loading = ref(false)
@@ -21,7 +22,7 @@ const loading = ref(false)
 const columns = ref([
   { field: 'date', header: 'Дата' },
   { field: 'day', header: 'День недели', filter: true },
-  { field: 'location', header: 'Местоположение' },
+  { field: 'location', header: 'Местоположение', filter: true },
   { field: 'name', header: 'ФИО' },
   { field: 'position', header: 'Должность' },
   { field: 'schedule_in', header: 'Часы по графику' },
@@ -58,6 +59,12 @@ const getMarks = async () => {
     )
 
     marks.value = data
+
+    columns.value.forEach((col) => {
+      let uniqueValues = [...new Set(marks.value.map((obj) => obj[col.field]))]
+
+      col.options = uniqueValues
+    })
   } catch (error) {
     console.error('Failed to fetch data:', error)
   } finally {
@@ -75,6 +82,7 @@ onMounted(async () => {
     <TableDateSelect @sendDatesRange="recieveDatesRange" :start="rangeStart" :end="rangeEnd" />
 
     <DataTable
+      dataKey="id"
       v-model:filters="filters"
       filterDisplay="row"
       :value="marks"
@@ -84,7 +92,7 @@ onMounted(async () => {
       :rows="5"
       :rowsPerPageOptions="[5, 10, 20, 50]"
       tableStyle="min-width: 50rem"
-      :globalFilterFields="['day']"
+      :globalFilterFields="['late_out']"
     >
       <template #empty>
         <div class="text-center">По вашему запросу ничего не найдено</div>
@@ -129,3 +137,9 @@ onMounted(async () => {
     </DataTable>
   </AdminLayout>
 </template>
+
+<style>
+  table {
+    white-space: nowrap;
+  }
+</style>
