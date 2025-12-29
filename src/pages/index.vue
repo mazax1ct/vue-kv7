@@ -3,87 +3,36 @@ import { onMounted, ref } from 'vue'
 import axios from 'axios'
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import TableDateSelect from '@/components/TableDateSelect.vue'
-
-import DataTable from 'datatables.net-vue3'
-import DataTablesLib from 'datatables.net-bs5'
-import 'datatables.net-buttons'
-import 'datatables.net-buttons/js/buttons.html5'
-import jszip from 'jszip'
+import DataTable from 'primevue/datatable'
+import Column from 'primevue/column'
 import moment from 'moment'
-
-DataTable.use(DataTablesLib)
-DataTablesLib.Buttons.jszip(jszip)
-
-const columns = [
-  {
-    data: 'date',
-    title: 'Дата',
-    render: function (data) {
-      return moment.unix(data).format('DD.MM.YYYY')
-    },
-  },
-  { data: 'day', title: 'День недели' },
-  { data: 'location', title: 'Местоположение' },
-  { data: 'name', title: 'ФИО' },
-  { data: 'position', title: 'Должность' },
-  { data: 'schedule_in', title: 'Часы по графику' },
-  { data: 'schedule_out', title: 'Часы факт' },
-  { data: 'in', title: 'Приход' },
-  { data: 'out', title: 'Уход' },
-  { data: 'late', title: 'Опоздание' },
-  { data: 'defect', title: 'Недоработка' },
-  { data: 'late_out', title: 'Ранний уход' },
-  { data: 'notify', title: 'Оповещение' },
-]
-
-const options = {
-  responsive: false,
-  select: false,
-  ordering: true,
-  searching: false,
-  oLanguage: {
-    sSearchPlaceholder: 'Найти в таблице',
-    sProcessing: 'Подождите...',
-    sLengthMenu: 'Показать _MENU_ записей',
-    sInfo: "Записи с _START_ до _END_ из <span id='total'>_TOTAL_</span> записей",
-    sInfoEmpty: 'Записи с 0 до 0 из 0 записей',
-    sInfoFiltered: '(отфильтровано из _MAX_ записей)',
-    sInfoPostFix: '',
-    sLoadingRecords: 'Загрузка записей...',
-    sZeroRecords: 'Записи отсутствуют.',
-    sEmptyTable: 'В таблице отсутствуют данные',
-    oPaginate: {
-      sFirst: 'Первая',
-      sPrevious: 'Предыдущая',
-      sNext: 'Следующая',
-      sLast: 'Последняя',
-    },
-    oAria: {
-      sSortAscending: ': активировать для сортировки столбца по возрастанию',
-      sSortDescending: ': активировать для сортировки столбца по убыванию',
-    },
-    lengthLabels: {
-      '-1': 'Все',
-    },
-  },
-  pagingType: 'simple_numbers',
-  lengthMenu: [10, 25, 50, -1],
-  layout: {
-    topEnd: 'pageLength',
-    topStart: {
-      buttons: [
-        {
-          extend: 'excel',
-          text: 'Выгрузить в Excel',
-          titleAttr: 'Выгрузить в Excel',
-          className: 'btn btn-outline-success',
-        },
-      ],
-    },
-  },
-}
+import Select from 'primevue/select'
+import { FilterMatchMode } from '@primevue/core/api'
+import { filter } from 'jszip'
 
 const marks = ref([])
+
+const filters = ref({
+  day: { value: null, matchMode: FilterMatchMode.EQUALS },
+})
+
+const loading = ref(false)
+
+const columns = ref([
+  { field: 'date', header: 'Дата' },
+  { field: 'day', header: 'День недели', filter: true },
+  { field: 'location', header: 'Местоположение' },
+  { field: 'name', header: 'ФИО' },
+  { field: 'position', header: 'Должность' },
+  { field: 'schedule_in', header: 'Часы по графику' },
+  { field: 'schedule_out', header: 'Часы факт' },
+  { field: 'in', header: 'Приход' },
+  { field: 'out', header: 'Уход' },
+  { field: 'late', header: 'Опоздание' },
+  { field: 'defect', header: 'Недоработка' },
+  { field: 'late_out', header: 'Ранний уход' },
+  { field: 'notify', header: 'Оповещение' },
+])
 
 const rangeStart = ref(new Date())
 
@@ -96,6 +45,8 @@ function recieveDatesRange(range) {
 }
 
 const getMarks = async () => {
+  loading.value = true
+
   let params = {
     date_gte: moment(rangeStart.value, 'DD-MM-YYYY').unix(),
     date_lte: moment(rangeEnd.value, 'DD-MM-YYYY').unix(),
@@ -109,6 +60,8 @@ const getMarks = async () => {
     marks.value = data
   } catch (error) {
     console.error('Failed to fetch data:', error)
+  } finally {
+    loading.value = false
   }
 }
 
@@ -122,36 +75,57 @@ onMounted(async () => {
     <TableDateSelect @sendDatesRange="recieveDatesRange" :start="rangeStart" :end="rangeEnd" />
 
     <DataTable
-      class="fs table table-bordered table-td-vertical-align-middle mb-0"
-      :columns="columns"
-      :data="marks"
-      :options="options"
+      v-model:filters="filters"
+      filterDisplay="row"
+      :value="marks"
+      showGridlines
+      :loading="loading"
+      paginator
+      :rows="5"
+      :rowsPerPageOptions="[5, 10, 20, 50]"
+      tableStyle="min-width: 50rem"
+      :globalFilterFields="['day']"
     >
-      <thead>
-        <tr>
-          <th>Дата</th>
-          <th>День недели</th>
-          <th>Местоположение</th>
-          <th>ФИО</th>
-          <th>Должность</th>
-          <th>Часы по графику</th>
-          <th>Часы факт</th>
-          <th>Приход</th>
-          <th>Уход</th>
-          <th>Опоздание</th>
-          <th>Недоработка</th>
-          <th>Ранний уход</th>
-          <th>Оповещение</th>
-        </tr>
-      </thead>
+      <template #empty>
+        <div class="text-center">По вашему запросу ничего не найдено</div>
+      </template>
+
+      <template #loading class="text-center">
+        <div class="text-center">Ожидайте загрузки данных...</div>
+      </template>
+
+      <Column
+        v-for="col of columns"
+        :key="col.field"
+        :field="col.field"
+        :header="col.header"
+        sortable
+        :showFilterMenu="false"
+        :filterField="col.field"
+      >
+        <template v-if="col.field === 'date'" #body="{ data }">
+          {{ moment.unix(data[col.field]).format('DD.MM.YYYY') }}
+        </template>
+
+        <template v-else #body="{ data }">
+          {{ data[col.field] }}
+        </template>
+
+        <template v-if="col.filter" #filter="{ filterModel, filterCallback }">
+          <Select
+            v-model="filterModel.value"
+            @change="filterCallback()"
+            :options="col.options"
+            :placeholder="col.header"
+            :showClear="true"
+            size="small"
+          >
+            <template #option="slotProps">
+              <div :value="slotProps.option">{{ slotProps.option }}</div>
+            </template>
+          </Select>
+        </template>
+      </Column>
     </DataTable>
   </AdminLayout>
 </template>
-
-<style>
-@import 'datatables.net-bs5';
-
-.page-link {
-  font-size: 14px;
-}
-</style>
