@@ -8,30 +8,39 @@ import Column from 'primevue/column'
 import moment from 'moment'
 import Select from 'primevue/select'
 import { FilterMatchMode } from '@primevue/core/api'
-import { filter } from 'jszip'
 
 const marks = ref([])
+
+const dt = ref(null)
 
 const filters = ref({
   day: { value: null, matchMode: FilterMatchMode.EQUALS },
   location: { value: null, matchMode: FilterMatchMode.EQUALS },
+  name: { value: null, matchMode: FilterMatchMode.EQUALS },
+  position: { value: null, matchMode: FilterMatchMode.EQUALS },
+  schedule_in: { value: null, matchMode: FilterMatchMode.EQUALS },
+  late: { value: null, matchMode: FilterMatchMode.EQUALS },
+  defect: { value: null, matchMode: FilterMatchMode.EQUALS },
+  late_out: { value: null, matchMode: FilterMatchMode.EQUALS },
 })
 
 const loading = ref(false)
+
+const dataLoaded = ref(false)
 
 const columns = ref([
   { field: 'date', header: 'Дата' },
   { field: 'day', header: 'День недели', filter: true },
   { field: 'location', header: 'Местоположение', filter: true },
-  { field: 'name', header: 'ФИО' },
-  { field: 'position', header: 'Должность' },
-  { field: 'schedule_in', header: 'Часы по графику' },
+  { field: 'name', header: 'ФИО', filter: true },
+  { field: 'position', header: 'Должность', filter: true },
+  { field: 'schedule_in', header: 'Часы по графику', filter: true },
   { field: 'schedule_out', header: 'Часы факт' },
   { field: 'in', header: 'Приход' },
   { field: 'out', header: 'Уход' },
-  { field: 'late', header: 'Опоздание' },
-  { field: 'defect', header: 'Недоработка' },
-  { field: 'late_out', header: 'Ранний уход' },
+  { field: 'late', header: 'Опоздание', filter: true },
+  { field: 'defect', header: 'Недоработка', filter: true },
+  { field: 'late_out', header: 'Ранний уход', filter: true },
   { field: 'notify', header: 'Оповещение' },
 ])
 
@@ -45,32 +54,64 @@ function recieveDatesRange(range) {
   getMarks()
 }
 
+const daysOrder = [
+  'Понедельник',
+  'Вторник',
+  'Среда',
+  'Четверг',
+  'Пятница',
+  'Суббота',
+  'Воскресенье',
+]
+
 const getMarks = async () => {
   loading.value = true
 
-  let params = {
-    date_gte: moment(rangeStart.value, 'DD-MM-YYYY').unix(),
-    date_lte: moment(rangeEnd.value, 'DD-MM-YYYY').unix(),
-  }
-
   try {
     const { data } = await axios.get(
-      `http://localhost:3000/marks?date_gte=${params.date_gte}&date_lte=${params.date_lte}`,
+      `http://localhost:3000/marks?date_gte=${moment(
+        rangeStart.value,
+        'DD-MM-YYYY'
+      ).unix()}&date_lte=${moment(rangeEnd.value, 'DD-MM-YYYY').unix()}`
     )
 
     marks.value = data
 
-    columns.value.forEach((col) => {
-      let uniqueValues = [...new Set(marks.value.map((obj) => obj[col.field]))]
+    if (marks.value.length > 0) {
+      columns.value.forEach((col) => {
+        let uniqueValues = [...new Set(marks.value.map((obj) => obj[col.field]))]
 
-      col.options = uniqueValues
-    })
+        if (col.field === 'day') {
+          uniqueValues.sort((a, b) => {
+            return daysOrder.indexOf(a) - daysOrder.indexOf(b)
+          })
+        } else {
+          uniqueValues.sort()
+        }
+
+        col.options = uniqueValues
+      })
+
+      dataLoaded.value = true
+    } else {
+      columns.value.forEach((col) => {
+        col.options = []
+      })
+
+      dataLoaded.value = false
+    }
   } catch (error) {
     console.error('Failed to fetch data:', error)
   } finally {
     loading.value = false
   }
 }
+
+const exportFilteredData = () => {
+    const displayedData = dt.value.processedData;
+    console.log(displayedData);
+    return displayedData
+};
 
 onMounted(async () => {
   await getMarks()
@@ -79,9 +120,24 @@ onMounted(async () => {
 
 <template>
   <AdminLayout>
-    <TableDateSelect @sendDatesRange="recieveDatesRange" :start="rangeStart" :end="rangeEnd" />
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+      <TableDateSelect @sendDatesRange="recieveDatesRange" :start="rangeStart" :end="rangeEnd" />
+
+      <download-excel
+        v-if="dataLoaded"
+        class="btn btn-outline-success"
+        :fetch="exportFilteredData"
+        type="xlsx"
+        worksheet="My Worksheet"
+        name="filename.xlsx"
+      >
+        Выгрузить в Excel
+      </download-excel>
+    </div>
 
     <DataTable
+      ref="dt"
+      responsiveLayout="scroll"
       dataKey="id"
       v-model:filters="filters"
       filterDisplay="row"
@@ -98,7 +154,7 @@ onMounted(async () => {
         <div class="text-center">По вашему запросу ничего не найдено</div>
       </template>
 
-      <template #loading class="text-center">
+      <template #loading>
         <div class="text-center">Ожидайте загрузки данных...</div>
       </template>
 
@@ -139,7 +195,7 @@ onMounted(async () => {
 </template>
 
 <style>
-  table {
-    white-space: nowrap;
-  }
+table th {
+  white-space: nowrap;
+}
 </style>

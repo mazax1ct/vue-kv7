@@ -15,20 +15,14 @@
   },
   "dependencies": {
     "@primeuix/themes": "^2.0.2",
-    "@vuepic/vue-datepicker": "^12.1.0",
     "axios": "^1.13.2",
     "bootstrap": "^5.3.8",
-    "datatables.net-bs5": "^2.3.6",
-    "datatables.net-buttons": "^3.2.6",
-    "datatables.net-dt": "^2.3.6",
-    "datatables.net-responsive-dt": "^3.0.7",
-    "datatables.net-vue3": "^3.0.4",
     "json-server": "^1.0.0-beta.3",
-    "jszip": "^3.10.1",
     "moment": "^2.30.1",
     "pinia": "^3.0.4",
     "primevue": "^4.5.4",
     "vue": "^3.5.25",
+    "vue-json-excel3": "^1.0.30",
     "vue-router": "^4.6.3"
   },
   "devDependencies": {
