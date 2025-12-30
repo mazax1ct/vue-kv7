@@ -13,6 +13,12 @@ const marks = ref([])
 
 const dt = ref(null)
 
+const dtPage = ref(1)
+
+const dtRows = ref(5)
+
+const dtPageCount = ref(0)
+
 const filters = ref({
   day: { value: null, matchMode: FilterMatchMode.EQUALS },
   location: { value: null, matchMode: FilterMatchMode.EQUALS },
@@ -64,6 +70,27 @@ const daysOrder = [
   'Воскресенье',
 ]
 
+let json_fields = {
+  'Дата': {
+    field: 'date',
+    callback: (value) => {
+      return `${moment.unix(value).format('DD.MM.YYYY')}`
+    },
+  },
+  'День недели': 'day',
+  'Местоположение': 'location',
+  'ФИО': 'name' ,
+  'Должность': 'position',
+  'Часы по графику': 'schedule_in',
+  'Часы факт': 'schedule_out',
+  'Приход': 'in',
+  'Уход': 'out',
+  'Опоздание': 'late',
+  'Недоработка': 'defect',
+  'Ранний уход': 'late_out',
+  'Оповещение': 'notify'
+}
+
 const getMarks = async () => {
   loading.value = true
 
@@ -93,6 +120,8 @@ const getMarks = async () => {
       })
 
       dataLoaded.value = true
+
+      dtPageCount.value = Math.ceil(marks.value.length / dtRows.value)
     } else {
       columns.value.forEach((col) => {
         col.options = []
@@ -107,11 +136,30 @@ const getMarks = async () => {
   }
 }
 
+const getPage = (event) => {
+  dtPage.value = event.page + 1
+}
+
+const getRows = (event) => {
+  dtRows.value = event
+}
+
 const exportFilteredData = () => {
-    const displayedData = dt.value.processedData;
-    console.log(displayedData);
-    return displayedData
-};
+  const displayedData = dt.value.processedData
+
+  if (dtPage.value === 1) {
+    return displayedData.slice(0, dtRows.value)
+  } else {
+    if (dtPage.value !== dtPageCount.value) {
+      return displayedData.slice(
+        dtRows.value * (dtPage.value - 1),
+        dtRows.value * (dtPage.value - 1) + dtRows.value
+      )
+    } else {
+      return displayedData.slice(dtRows.value * (dtPage.value - 1), marks.value.length)
+    }
+  }
+}
 
 onMounted(async () => {
   await getMarks()
@@ -126,6 +174,7 @@ onMounted(async () => {
       <download-excel
         v-if="dataLoaded"
         class="btn btn-outline-success"
+        :fields="json_fields"
         :fetch="exportFilteredData"
         type="xlsx"
         worksheet="My Worksheet"
@@ -145,10 +194,11 @@ onMounted(async () => {
       showGridlines
       :loading="loading"
       paginator
-      :rows="5"
+      :rows="dtRows"
       :rowsPerPageOptions="[5, 10, 20, 50]"
       tableStyle="min-width: 50rem"
-      :globalFilterFields="['late_out']"
+      @page="getPage($event)"
+      @update:rows="getRows($event)"
     >
       <template #empty>
         <div class="text-center">По вашему запросу ничего не найдено</div>
