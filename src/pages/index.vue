@@ -1,25 +1,29 @@
 <script setup>
 import { onMounted, ref } from 'vue'
+
 import axios from 'axios'
+
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import TableDateSelect from '@/components/TableDateSelect.vue'
+
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
-import moment from 'moment'
 import Select from 'primevue/select'
 import { FilterMatchMode } from '@primevue/core/api'
 
-const marks = ref([])
+import moment from 'moment'
 
-const dt = ref(null)
+const marks = ref([]) //данные для таблицы
 
-const dtPage = ref(1)
+const dt = ref(null) //ссылка на таблицу
 
-const dtRows = ref(5)
+const dtPage = ref(1) //стартовая страница
 
-const dtPageCount = ref(0)
+const dtRows = ref(5) //стартовое кол-во строк таблицы
 
-const filters = ref({
+const dtPageCount = ref(0) //кол-во страниц до появления данных
+
+const filters = ref({ //фильтры по колонкам
   day: { value: null, matchMode: FilterMatchMode.EQUALS },
   location: { value: null, matchMode: FilterMatchMode.EQUALS },
   name: { value: null, matchMode: FilterMatchMode.EQUALS },
@@ -30,11 +34,11 @@ const filters = ref({
   late_out: { value: null, matchMode: FilterMatchMode.EQUALS },
 })
 
-const loading = ref(false)
+const loading = ref(false) //отметка о загрузке
 
-const dataLoaded = ref(false)
+const dataLoaded = ref(false) //отметка о том что данные получены
 
-const columns = ref([
+const columns = ref([ //колонки
   { field: 'date', header: 'Дата' },
   { field: 'day', header: 'День недели', filter: true },
   { field: 'location', header: 'Местоположение', filter: true },
@@ -50,17 +54,17 @@ const columns = ref([
   { field: 'notify', header: 'Оповещение' },
 ])
 
-const rangeStart = ref(new Date())
+const rangeStart = ref(new Date()) //начало периода выборки
 
-const rangeEnd = ref(new Date())
+const rangeEnd = ref(new Date()) //конец периода выборки
 
-function recieveDatesRange(range) {
+function recieveDatesRange(range) { //функция обновления периода выборки
   rangeStart.value = range.start
   rangeEnd.value = range.end
   getMarks()
 }
 
-const daysOrder = [
+const daysOrder = [ //порядок сортировки дней в фильтре
   'Понедельник',
   'Вторник',
   'Среда',
@@ -70,7 +74,7 @@ const daysOrder = [
   'Воскресенье',
 ]
 
-let json_fields = {
+let json_fields = { //поля данных для экспорта
   'Дата': {
     field: 'date',
     callback: (value) => {
@@ -91,7 +95,7 @@ let json_fields = {
   'Оповещение': 'notify'
 }
 
-const getMarks = async () => {
+const getMarks = async () => { //получение данных
   loading.value = true
 
   try {
@@ -100,15 +104,15 @@ const getMarks = async () => {
         rangeStart.value,
         'DD-MM-YYYY'
       ).unix()}&date_lte=${moment(rangeEnd.value, 'DD-MM-YYYY').unix()}`
-    )
+    ) //запрос данных с учётом периода TODO переделать на параметры
 
-    marks.value = data
+    marks.value = data //обновляем переменную данных для таблицы
 
     if (marks.value.length > 0) {
       columns.value.forEach((col) => {
-        let uniqueValues = [...new Set(marks.value.map((obj) => obj[col.field]))]
+        let uniqueValues = [...new Set(marks.value.map((obj) => obj[col.field]))] //собираем массив уникальных значений для фильтров
 
-        if (col.field === 'day') {
+        if (col.field === 'day') { //сортировка значений для фильтров
           uniqueValues.sort((a, b) => {
             return daysOrder.indexOf(a) - daysOrder.indexOf(b)
           })
@@ -116,12 +120,12 @@ const getMarks = async () => {
           uniqueValues.sort()
         }
 
-        col.options = uniqueValues
+        col.options = uniqueValues //запись значений для фильтров
       })
 
-      dataLoaded.value = true
+      dataLoaded.value = true //отметка о том что данные получены
 
-      dtPageCount.value = Math.ceil(marks.value.length / dtRows.value)
+      dtPageCount.value = Math.ceil(marks.value.length / dtRows.value) //считаем кол-во страниц с учётом кол-ва строк на странице
     } else {
       columns.value.forEach((col) => {
         col.options = []
@@ -136,19 +140,19 @@ const getMarks = async () => {
   }
 }
 
-const getPage = (event) => {
+const getPage = (event) => { //функция получения текущей страницы
   dtPage.value = event.page + 1
 }
 
-const getRows = (event) => {
+const getRows = (event) => { //функция получения кол-ва строк на странице
   dtRows.value = event
 }
 
-const exportFilteredData = () => {
+const exportFilteredData = () => { //экспорт данных в exel
   const displayedData = dt.value.processedData
 
   if (dtPage.value === 1) {
-    return displayedData.slice(0, dtRows.value)
+    return displayedData.slice(0, dtRows.value) //для первой страницы
   } else {
     if (dtPage.value !== dtPageCount.value) {
       return displayedData.slice(
@@ -156,12 +160,20 @@ const exportFilteredData = () => {
         dtRows.value * (dtPage.value - 1) + dtRows.value
       )
     } else {
-      return displayedData.slice(dtRows.value * (dtPage.value - 1), marks.value.length)
+      return displayedData.slice(dtRows.value * (dtPage.value - 1), marks.value.length) //для последней страницы
     }
   }
 }
 
-onMounted(async () => {
+const onFilter = (event) => { //функция обновления отметки о загрузке данных при фильтрации
+  if(event.filteredValue.length > 0){
+    dataLoaded.value = true
+  } else {
+    dataLoaded.value = false
+  }
+};
+
+onMounted(async () => { //получаем данные на маунт приложения
   await getMarks()
 })
 </script>
@@ -199,6 +211,7 @@ onMounted(async () => {
       tableStyle="min-width: 50rem"
       @page="getPage($event)"
       @update:rows="getRows($event)"
+      @filter="onFilter"
     >
       <template #empty>
         <div class="text-center">По вашему запросу ничего не найдено</div>
@@ -247,5 +260,9 @@ onMounted(async () => {
 <style>
 table th {
   white-space: nowrap;
+}
+
+.p-datatable-filter-element-container .p-select-sm .p-select-label {
+  font-size: 12px;
 }
 </style>
