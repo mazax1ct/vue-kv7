@@ -148,20 +148,16 @@ const getRows = (event) => { //функция получения кол-ва с�
   dtRows.value = event
 }
 
-const exportFilteredData = () => { //экспорт данных в exel
+const exportFilteredData = () => { //подготовка массива данных для экспорта в excel с учетом постранички
   const displayedData = dt.value.processedData
 
-  if (dtPage.value === 1) {
-    return displayedData.slice(0, dtRows.value) //для первой страницы
+  if(displayedData.length <= dtRows.value) {
+    return displayedData.slice(0, displayedData.length)
   } else {
-    if (dtPage.value !== dtPageCount.value) {
-      return displayedData.slice(
+    return displayedData.slice(
         dtRows.value * (dtPage.value - 1),
         dtRows.value * (dtPage.value - 1) + dtRows.value
       )
-    } else {
-      return displayedData.slice(dtRows.value * (dtPage.value - 1), marks.value.length) //для последней страницы
-    }
   }
 }
 
