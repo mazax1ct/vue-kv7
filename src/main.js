@@ -1,4 +1,4 @@
-import './assets/styles.scss'
+//import './assets/styles.scss'
 
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
@@ -29,7 +29,8 @@ app.use(PrimeVue, {
         dayNamesMin: ['Вс', 'Пон', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб'],
         emptyMessage: 'Нет данных',
         dateFormat:	'dd.mm.yy',
-        firstDayOfWeek: 1
+        firstDayOfWeek: 1,
+        aria: {close: 'Закрыть'}
     }
 });
 

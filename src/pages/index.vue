@@ -23,12 +23,13 @@ const dtRows = ref(5) //стартовое кол-во строк таблицы
 
 const dtPageCount = ref(0) //кол-во страниц до появления данных
 
-const filters = ref({ //фильтры по колонкам
+const filters = ref({
+  //фильтры по колонкам
   day: { value: null, matchMode: FilterMatchMode.EQUALS },
   location: { value: null, matchMode: FilterMatchMode.EQUALS },
   name: { value: null, matchMode: FilterMatchMode.EQUALS },
   position: { value: null, matchMode: FilterMatchMode.EQUALS },
-  schedule_in: { value: null, matchMode: FilterMatchMode.EQUALS },
+  graphic: { value: null, matchMode: FilterMatchMode.EQUALS },
   late: { value: null, matchMode: FilterMatchMode.EQUALS },
   defect: { value: null, matchMode: FilterMatchMode.EQUALS },
   late_out: { value: null, matchMode: FilterMatchMode.EQUALS },
@@ -38,14 +39,15 @@ const loading = ref(false) //отметка о загрузке
 
 const dataLoaded = ref(false) //отметка о том что данные получены
 
-const columns = ref([ //колонки
+const columns = ref([
+  //колонки
   { field: 'date', header: 'Дата' },
   { field: 'day', header: 'День недели', filter: true },
   { field: 'location', header: 'Местоположение', filter: true },
   { field: 'name', header: 'ФИО', filter: true },
   { field: 'position', header: 'Должность', filter: true },
-  { field: 'schedule_in', header: 'Часы по графику', filter: true },
-  { field: 'schedule_out', header: 'Часы факт' },
+  { field: 'graphic', header: 'Часы по графику', filter: true },
+  { field: 'fact', header: 'Часы факт' },
   { field: 'in', header: 'Приход' },
   { field: 'out', header: 'Уход' },
   { field: 'late', header: 'Опоздание', filter: true },
@@ -58,13 +60,15 @@ const rangeStart = ref(new Date()) //начало периода выборки
 
 const rangeEnd = ref(new Date()) //конец периода выборки
 
-function recieveDatesRange(range) { //функция обновления периода выборки
+function recieveDatesRange(range) {
+  //функция обновления периода выборки
   rangeStart.value = range.start
   rangeEnd.value = range.end
   getMarks()
 }
 
-const daysOrder = [ //порядок сортировки дней в фильтре
+const daysOrder = [
+  //порядок сортировки дней в фильтре
   'Понедельник',
   'Вторник',
   'Среда',
@@ -74,7 +78,8 @@ const daysOrder = [ //порядок сортировки дней в фильт
   'Воскресенье',
 ]
 
-let json_fields = { //поля данных для экспорта
+let json_fields = {
+  //поля данных для экспорта
   'Дата': {
     field: 'date',
     callback: (value) => {
@@ -83,27 +88,28 @@ let json_fields = { //поля данных для экспорта
   },
   'День недели': 'day',
   'Местоположение': 'location',
-  'ФИО': 'name' ,
+  'ФИО': 'name',
   'Должность': 'position',
-  'Часы по графику': 'schedule_in',
-  'Часы факт': 'schedule_out',
+  'Часы по графику': 'graphic',
+  'Часы факт': 'fact',
   'Приход': 'in',
   'Уход': 'out',
   'Опоздание': 'late',
   'Недоработка': 'defect',
   'Ранний уход': 'late_out',
-  'Оповещение': 'notify'
+  'Оповещение': 'notify',
 }
 
-const getMarks = async () => { //получение данных
+const getMarks = async () => {
+  //получение данных
   loading.value = true
 
   try {
     const { data } = await axios.get(
       `http://localhost:3000/marks?date_gte=${moment(
         rangeStart.value,
-        'DD-MM-YYYY'
-      ).unix()}&date_lte=${moment(rangeEnd.value, 'DD-MM-YYYY').unix()}`
+        'DD-MM-YYYY',
+      ).unix()}&date_lte=${moment(rangeEnd.value, 'DD-MM-YYYY').unix()}`,
     ) //запрос данных с учётом периода TODO переделать на параметры
 
     marks.value = data //обновляем переменную данных для таблицы
@@ -112,7 +118,8 @@ const getMarks = async () => { //получение данных
       columns.value.forEach((col) => {
         let uniqueValues = [...new Set(marks.value.map((obj) => obj[col.field]))] //собираем массив уникальных значений для фильтров
 
-        if (col.field === 'day') { //сортировка значений для фильтров
+        if (col.field === 'day') {
+          //сортировка значений для фильтров
           uniqueValues.sort((a, b) => {
             return daysOrder.indexOf(a) - daysOrder.indexOf(b)
           })
@@ -140,48 +147,53 @@ const getMarks = async () => { //получение данных
   }
 }
 
-const getPage = (event) => { //функция получения текущей страницы
+const getPage = (event) => {
+  //функция получения текущей страницы
   dtPage.value = event.page + 1
 }
 
-const getRows = (event) => { //функция получения кол-ва строк на странице
+const getRows = (event) => {
+  //функция получения кол-ва строк на странице
   dtRows.value = event
 }
 
-const exportFilteredData = () => { //подготовка массива данных для экспорта в excel с учетом постранички
+const exportFilteredData = () => {
+  //подготовка массива данных для экспорта в excel с учетом постранички
   const displayedData = dt.value.processedData
 
-  if(displayedData.length <= dtRows.value) {
+  if (displayedData.length <= dtRows.value) {
     return displayedData.slice(0, displayedData.length)
   } else {
     return displayedData.slice(
-        dtRows.value * (dtPage.value - 1),
-        dtRows.value * (dtPage.value - 1) + dtRows.value
-      )
+      dtRows.value * (dtPage.value - 1),
+      dtRows.value * (dtPage.value - 1) + dtRows.value,
+    )
   }
 }
 
-const onFilter = (event) => { //функция обновления отметки о загрузке данных при фильтрации
-  if(event.filteredValue.length > 0){
+const onFilter = (event) => {
+  //функция обновления отметки о загрузке данных при фильтрации
+  if (event.filteredValue.length > 0) {
     dataLoaded.value = true
   } else {
     dataLoaded.value = false
   }
-};
+}
 
-onMounted(async () => { //получаем данные на маунт приложения
+onMounted(async () => {
+  //получаем данные на маунт приложения
   await getMarks()
 })
 </script>
 
 <template>
   <AdminLayout>
-    <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 mb-3">
+    <div class="flex flex-wrap items-center justify-content-between gap-3 mb-3">
       <TableDateSelect @sendDatesRange="recieveDatesRange" :start="rangeStart" :end="rangeEnd" />
 
       <download-excel
         v-if="dataLoaded"
-        class="btn btn-outline-success"
+        class="cursor-pointer py-2 px-3 text-sm border-emerald-700 border-solid border rounded-sm text-emerald-700 hover:bg-emerald-700 hover:text-white"
         :fields="json_fields"
         :fetch="exportFilteredData"
         type="xlsx"
@@ -231,7 +243,19 @@ onMounted(async () => { //получаем данные на маунт прил
         </template>
 
         <template v-else #body="{ data }">
-          {{ data[col.field] }}
+          <span v-if="col.field === 'fact'" :class="data.fact_warning ? 'text-red-500' : ''">{{
+            data[col.field]
+          }}</span>
+          <span v-else-if="col.field === 'in'" :class="data.in_warning ? 'text-red-500' : ''">{{
+            data[col.field]
+          }}</span>
+          <span v-else-if="col.field === 'out'" :class="data.out_warning ? 'text-red-500' : ''">{{
+            data[col.field]
+          }}</span>
+          <span v-else-if="col.field === 'notify'">
+            {{ data[col.field]}} <span v-if="data.notify_list" class="text-red-500">({{ data.notify_list }})</span>
+          </span>
+          <span v-else>{{ data[col.field] }}</span>
         </template>
 
         <template v-if="col.filter" #filter="{ filterModel, filterCallback }">

@@ -15,12 +15,13 @@
   },
   "dependencies": {
     "@primeuix/themes": "^2.0.2",
+    "@tailwindcss/vite": "^4.1.18",
     "axios": "^1.13.2",
-    "bootstrap": "^5.3.8",
     "json-server": "^1.0.0-beta.3",
     "moment": "^2.30.1",
     "pinia": "^3.0.4",
     "primevue": "^4.5.4",
+    "tailwindcss": "^4.1.18",
     "vue": "^3.5.25",
     "vue-json-excel3": "^1.0.30",
     "vue-router": "^4.6.3"

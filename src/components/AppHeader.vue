@@ -2,19 +2,25 @@
 
 <template>
   <header
-    class="d-flex flex-column flex-lg-row align-items-center p-3 px-md-4 bg-white border-bottom shadow-sm"
+    class="flex flex-col xl:flex-row items-center p-3 md:px-4 bg-white border-bottom shadow-sm"
   >
-    <h5 class="my-0 mr-md-auto font-weight-normal me-lg-auto">KV7.store</h5>
+    <h5 class="my-0 xl:mr-auto font-bold text-lg">KV7.store</h5>
 
-    <nav class="me-lg-2 text-center text-lg-start">
-      <RouterLink class="p-2 text-dark d-inline-block" to="/">Отчет по отметкам</RouterLink>
-      <RouterLink class="p-2 text-dark d-inline-block" to="/report">Общий отчет</RouterLink>
-      <RouterLink class="p-2 text-dark d-inline-block" to="/worktime">Управление графиком</RouterLink>
-      <RouterLink class="p-2 text-dark d-inline-block" to="/notice">Управление уведомлениями</RouterLink>
+    <nav class="mb-1.5 xl:mb-0 xl:mr-2 text-center">
+      <RouterLink class="p-2 text-dark inline-block hover:underline" to="/">Отчет по отметкам</RouterLink>
+      <RouterLink class="p-2 text-dark inline-block hover:underline" to="/report">Общий отчет</RouterLink>
+      <RouterLink class="p-2 text-dark inline-block hover:underline" to="/worktime">Управление графиком</RouterLink>
+      <RouterLink class="p-2 text-dark inline-block hover:underline" to="/notice">Управление уведомлениями</RouterLink>
     </nav>
 
-    <div class="me-lg-3 mb-2 mb-lg-0 text-secondary">Вы вошли как: <b>admin</b></div>
+    <div class="mb-2 xl:mb-0 xl:mr-3 text-secondary">Вы вошли как: <b>admin</b></div>
 
-    <a class="btn btn-sm btn-outline-primary" href="/ajax/do_logout.php">Выход</a>
+    <a class="py-1 px-2 border-sky-600 border-solid border rounded-sm text-sky-600 hover:bg-sky-600 hover:text-white" href="/ajax/do_logout.php">Выход</a>
   </header>
 </template>
+
+<style>
+  .router-link-active {
+    text-decoration: underline;
+  }
+</style>
