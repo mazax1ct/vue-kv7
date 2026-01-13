@@ -8,6 +8,8 @@ import router from './router/router'
 
 import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
+import ConfirmationService from 'primevue/confirmationservice'
+import ToastService from 'primevue/toastservice'
 
 import JsonExcel from "vue-json-excel3"
 
@@ -32,6 +34,8 @@ app.use(PrimeVue, {
         firstDayOfWeek: 1,
         aria: {close: 'Закрыть'}
     }
-});
+})
+app.use(ConfirmationService)
+app.use(ToastService)
 
 app.mount('#app')

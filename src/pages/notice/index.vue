@@ -9,6 +9,10 @@ import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Dialog from 'primevue/dialog'
 import Select from 'primevue/select'
+import ConfirmDialog from 'primevue/confirmdialog'
+import { useConfirm } from 'primevue/useconfirm'
+import Toast from 'primevue/toast'
+import { useToast } from 'primevue/usetoast'
 
 const notices = ref([]) //данные для таблицы
 
@@ -16,23 +20,27 @@ const loading = ref(false) //отметка о загрузке
 
 const visible = ref(false) //отметка о видимости диалога
 
+const currentNotice = ref()
+
+const currentNoticeId = ref()
+
 const start = ref()
 
 const end = ref()
 
-const timezones = ref([
-  { value: '-1', name: 'Калининград (МСК-1)' },
-  { value: '0', name: 'Москва (МСК)' },
-  { value: '1', name: 'Самара (МСК+1)' },
-  { value: '2', name: 'Екатеринбург (МСК+2)' },
-  { value: '3', name: 'Омск (МСК+3)' },
-  { value: '4', name: 'Красноярск (МСК+4)' },
-  { value: '5', name: 'Иркутск (МСК+5)' },
-  { value: '6', name: 'Якутск (МСК+6)' },
-  { value: '7', name: 'Владивосток (МСК+7)' },
-  { value: '8', name: 'Магадан (МСК+8)' },
-  { value: '9', name: 'Камчатка (МСК+9)' },
-])
+const timezones = [
+  { key: '-1', value: 'Калининград (МСК-1)' },
+  { key: '0', value: 'Москва (МСК)' },
+  { key: '1', value: 'Самара (МСК+1)' },
+  { key: '2', value: 'Екатеринбург (МСК+2)' },
+  { key: '3', value: 'Омск (МСК+3)' },
+  { key: '4', value: 'Красноярск (МСК+4)' },
+  { key: '5', value: 'Иркутск (МСК+5)' },
+  { key: '6', value: 'Якутск (МСК+6)' },
+  { key: '7', value: 'Владивосток (МСК+7)' },
+  { key: '8', value: 'Магадан (МСК+8)' },
+  { key: '9', value: 'Камчатка (МСК+9)' },
+]
 
 const timezone = ref()
 
@@ -63,8 +71,8 @@ const hours = ref([
   '00:00',
 ])
 
+//получение данных
 const getNotices = async () => {
-  //получение данных
   loading.value = true
 
   try {
@@ -78,8 +86,80 @@ const getNotices = async () => {
   }
 }
 
-const dialogUpdate = () => {
-  //функция обновления данных в попапе
+//функция обновления данных в попапе
+const dialogUpdate = (id) => {
+  currentNotice.value = notices.value.find((notice) => notice.id === id)
+
+  currentNoticeId.value = currentNotice.value.id
+  start.value = currentNotice.value.start
+  end.value = currentNotice.value.end
+  timezone.value = currentNotice.value.timezone
+
+  visible.value = true
+}
+
+//удаление записи об уведомлении
+const removeNotice = async (id) => {
+  loading.value = true
+
+  try {
+    await axios.delete(`http://localhost:3000/notices/${id}`)
+
+    //обнуляем значения переменных
+    currentNotice.value = null
+    currentNoticeId.value = null
+    start.value = null
+    end.value = null
+    timezone.value = null
+
+    await getNotices() //получаем обновленные данные после удаления записи
+
+    visible.value = false
+  } catch (error) {
+    console.error('Failed to fetch data:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+//обновление записи об уведомлении
+const updateNotice = async (id) => {
+  loading.value = true
+
+  try {
+    await axios.patch(`http://localhost:3000/notices/${id}`, {
+      id: currentNoticeId.value,
+      timezone: timezone.value,
+      start: start.value,
+      end: end.value,
+    })
+
+    await getNotices() //получаем обновленные данные после обновления записи
+
+    updateConfirmation()
+  } catch (error) {
+    console.error('Failed to fetch data:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+//уведомление об обновлении данных
+const toast = useToast()
+
+const updateConfirmation = () => {
+  toast.add({ severity: 'info', summary: 'Информация', detail: 'Запись обновлена', life: 3000 })
+}
+
+//попап подтверждения удаления записи
+const confirm = useConfirm()
+
+const deleteConfirm = () => {
+  confirm.require({
+    group: 'headless',
+    header: 'Подтверждение',
+    message: 'Вы уверены, что хотите удалить запись?',
+  })
 }
 
 onMounted(async () => {
@@ -90,7 +170,16 @@ onMounted(async () => {
 
 <template>
   <AdminLayout>
-    <div class="mx-auto max-w-5xl">
+    <div class="mx-auto max-w-5xl pt-4">
+      <div class="text-right mb-4">
+        <button
+          class="cursor-pointer py-2 px-3 text-sm border-sky-700 bg-sky-700 border-solid border rounded-sm text-white hover:bg-sky-600"
+          type="button"
+        >
+          Добавить уведомление
+        </button>
+      </div>
+
       <DataTable
         ref="dt"
         responsiveLayout="scroll"
@@ -111,17 +200,21 @@ onMounted(async () => {
           <div class="text-center">Ожидайте загрузки данных...</div>
         </template>
 
-        <Column field="timezone" header="Часовой пояс"></Column>
+        <Column field="timezone" header="Часовой пояс">
+          <template #body="slotProps">{{
+            timezones.find((timezone) => timezone.key === slotProps.data.timezone).value
+          }}</template>
+        </Column>
 
         <Column field="start" header="Начало"></Column>
 
         <Column field="end" header="Окончание"></Column>
 
-        <Column style="width: 155px">
+        <Column field="id" style="width: 155px">
           <template #body="slotProps">
             <button
               label="Show"
-              @click="visible = true"
+              @click="dialogUpdate(slotProps.data.id)"
               class="cursor-pointer py-2 px-3 text-sm border-sky-600 border-solid border rounded-sm text-sky-600 hover:bg-sky-600 hover:text-white"
               type="button"
               title="Редактировать"
@@ -144,12 +237,11 @@ onMounted(async () => {
         <Select
           v-model="timezone"
           :options="timezones"
-          optionLabel="name"
-          optionValue="value"
+          optionLabel="value"
+          optionValue="key"
           placeholder="Выберите часовой пояс"
           class="w-full mb-4"
           size="small"
-          @change="console.log(timezone)"
         />
 
         <p class="mb-2 text-sm font-semibold">Время работы</p>
@@ -164,6 +256,7 @@ onMounted(async () => {
               placeholder="Выберите время"
               class="w-full"
               size="small"
+              @change="console.log()"
             />
           </div>
 
@@ -181,11 +274,41 @@ onMounted(async () => {
         </div>
 
         <div class="flex flex-wrap gap-2">
+          <Toast />
+
+          <ConfirmDialog group="headless">
+            <template #container="{ message, acceptCallback, rejectCallback }">
+              <div class="flex flex-col items-center p-8 bg-surface-0 dark:bg-surface-900 rounded">
+                <h5 class="font-bold text-2xl block mb-2">{{ message.header }}</h5>
+
+                <p class="mb-2">{{ message.message }}</p>
+
+                <div class="flex items-center gap-2 mt-6">
+                  <button
+                    @click="removeNotice(currentNoticeId)"
+                    class="cursor-pointer py-2 px-3 text-sm border-red-700 bg-red-700 border-solid border rounded-sm text-white hover:bg-red-600"
+                    type="button"
+                  >
+                    Удалить
+                  </button>
+
+                  <button
+                    @click="rejectCallback"
+                    class="cursor-pointer py-2 px-3 text-sm border-slate-700 bg-slate-700 border-solid border rounded-sm text-white hover:bg-slate-600"
+                    type="button"
+                  >
+                    Отмена
+                  </button>
+                </div>
+              </div>
+            </template>
+          </ConfirmDialog>
+
           <button
             class="mr-auto cursor-pointer py-2 px-3 text-sm border-red-700 bg-red-700 border-solid border rounded-sm text-white hover:bg-red-600"
             type="button"
             label="Удалить запись"
-            @click="visible = false"
+            @click="deleteConfirm()"
           >
             Удалить запись
           </button>
@@ -198,11 +321,12 @@ onMounted(async () => {
           >
             Закрыть
           </button>
+
           <button
             class="cursor-pointer py-2 px-3 text-sm border-sky-700 bg-sky-700 border-solid border rounded-sm text-white hover:bg-sky-600"
             type="button"
             label="Сохранить"
-            @click="visible = false"
+            @click="updateNotice(currentNoticeId)"
           >
             Сохранить
           </button>
