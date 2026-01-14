@@ -14,20 +14,39 @@ import { useConfirm } from 'primevue/useconfirm'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
 
+//уведомление об обновлении данных
+const toast = useToast()
+
+const updateConfirmation = (severity, summary, detail) => {
+  toast.add({ severity: severity, summary: summary, detail: detail, life: 3000 })
+}
+
+//попап подтверждения удаления записи
+const confirm = useConfirm()
+
+const deleteConfirm = () => {
+  confirm.require({
+    group: 'headless',
+    header: 'Подтверждение',
+    message: 'Вы уверены, что хотите удалить запись?',
+  })
+}
+
 const notices = ref([]) //данные для таблицы
 
 const loading = ref(false) //отметка о загрузке
 
 const visible = ref(false) //отметка о видимости диалога
 
-const currentNotice = ref()
+const currentNotice = ref(null)
 
-const currentNoticeId = ref()
+const currentNoticeId = ref(null)
 
-const start = ref()
+const start = ref() //время начала проверки
 
-const end = ref()
+const end = ref() //время конца проверки
 
+//таймзоны
 const timezones = [
   { key: '-1', value: 'Калининград (МСК-1)' },
   { key: '0', value: 'Москва (МСК)' },
@@ -42,9 +61,10 @@ const timezones = [
   { key: '9', value: 'Камчатка (МСК+9)' },
 ]
 
-const timezone = ref()
+const timezone = ref() //таймзона
 
-const hours = ref([
+//часы для наполнения селектов
+const hours = [
   '01:00',
   '02:00',
   '03:00',
@@ -69,7 +89,7 @@ const hours = ref([
   '22:00',
   '23:00',
   '00:00',
-])
+]
 
 //получение данных
 const getNotices = async () => {
@@ -86,14 +106,27 @@ const getNotices = async () => {
   }
 }
 
-//функция обновления данных в попапе
-const dialogUpdate = (id) => {
-  currentNotice.value = notices.value.find((notice) => notice.id === id)
+const dialogHeader = ref()
 
-  currentNoticeId.value = currentNotice.value.id
-  start.value = currentNotice.value.start
-  end.value = currentNotice.value.end
-  timezone.value = currentNotice.value.timezone
+//функция обновления данных в попапе
+const noticeDialogOpen = (id) => {
+  if (id) {
+    dialogHeader.value = 'Редактирование'
+
+    currentNotice.value = notices.value.find((notice) => notice.id === id)
+
+    currentNoticeId.value = currentNotice.value.id
+    start.value = currentNotice.value.start
+    end.value = currentNotice.value.end
+    timezone.value = currentNotice.value.timezone
+  } else {
+    dialogHeader.value = 'Создание записи'
+
+    currentNoticeId.value = null
+    start.value = null
+    end.value = null
+    timezone.value = null
+  }
 
   visible.value = true
 }
@@ -101,6 +134,8 @@ const dialogUpdate = (id) => {
 //удаление записи об уведомлении
 const removeNotice = async (id) => {
   loading.value = true
+
+  await getNotices()
 
   try {
     await axios.delete(`http://localhost:3000/notices/${id}`)
@@ -112,7 +147,9 @@ const removeNotice = async (id) => {
     end.value = null
     timezone.value = null
 
-    await getNotices() //получаем обновленные данные после удаления записи
+    updateConfirmation('error', 'Информация', 'Запись удалена')
+
+    await getNotices()
 
     visible.value = false
   } catch (error) {
@@ -122,48 +159,76 @@ const removeNotice = async (id) => {
   }
 }
 
-//обновление записи об уведомлении
-const updateNotice = async (id) => {
-  loading.value = true
+//валидация времени начала и конца проверки
+const validationError = ref(false)
 
-  try {
-    await axios.patch(`http://localhost:3000/notices/${id}`, {
-      id: currentNoticeId.value,
-      timezone: timezone.value,
-      start: start.value,
-      end: end.value,
-    })
-
-    await getNotices() //получаем обновленные данные после обновления записи
-
-    updateConfirmation()
-  } catch (error) {
-    console.error('Failed to fetch data:', error)
-  } finally {
-    loading.value = false
+const startEndValidation = () => {
+  if (hours.indexOf(end.value) <= hours.indexOf(start.value)) {
+    validationError.value = true
+  } else {
+    validationError.value = false
   }
 }
 
-//уведомление об обновлении данных
-const toast = useToast()
+//обновление записи об уведомлении
+const updateNotices = async (id) => {
+  loading.value = true
 
-const updateConfirmation = () => {
-  toast.add({ severity: 'info', summary: 'Информация', detail: 'Запись обновлена', life: 3000 })
+  await getNotices()
+
+  if (id) {
+    try {
+      await axios.patch(`http://localhost:3000/notices/${id}`, {
+        id: currentNoticeId.value,
+        timezone: timezone.value,
+        start: start.value,
+        end: end.value,
+      })
+
+      await getNotices() //получаем обновленные данные после обновления записи
+
+      updateConfirmation('info', 'Информация', 'Запись обновлена')
+
+      visible.value = false
+    } catch (error) {
+      console.error('Failed to fetch data:', error)
+    } finally {
+      loading.value = false
+    }
+  } else {
+    let newNoticeId = 0
+
+    if (notices.value.length > 0) {
+      newNoticeId = parseInt(notices.value.at(-1).id) + 1
+    } else {
+      newNoticeId = 1
+    }
+
+    const newItem = {
+      id: newNoticeId,
+      timezone: timezone.value,
+      start: start.value,
+      end: end.value,
+    }
+
+    try {
+      await axios.post('http://localhost:3000/notices', newItem)
+
+      await getNotices()
+
+      updateConfirmation('success', 'Информация', 'Запись добавлена')
+
+      visible.value = false
+    } catch (error) {
+      console.error('Failed to fetch data:', error)
+    } finally {
+      loading.value = false
+    }
+  }
 }
 
-//попап подтверждения удаления записи
-const confirm = useConfirm()
-
-const deleteConfirm = () => {
-  confirm.require({
-    group: 'headless',
-    header: 'Подтверждение',
-    message: 'Вы уверены, что хотите удалить запись?',
-  })
-}
-
+//получаем данные на маунт приложения
 onMounted(async () => {
-  //получаем данные на маунт приложения
   await getNotices()
 })
 </script>
@@ -175,6 +240,7 @@ onMounted(async () => {
         <button
           class="cursor-pointer py-2 px-3 text-sm border-sky-700 bg-sky-700 border-solid border rounded-sm text-white hover:bg-sky-600"
           type="button"
+          @click="noticeDialogOpen()"
         >
           Добавить уведомление
         </button>
@@ -188,7 +254,7 @@ onMounted(async () => {
         showGridlines
         :loading="loading"
         paginator
-        :rows="5"
+        :rows="20"
         :rowsPerPageOptions="[5, 10, 20, 50]"
         tableStyle="min-width: 50rem"
       >
@@ -214,7 +280,7 @@ onMounted(async () => {
           <template #body="slotProps">
             <button
               label="Show"
-              @click="dialogUpdate(slotProps.data.id)"
+              @click="noticeDialogOpen(slotProps.data.id)"
               class="cursor-pointer py-2 px-3 text-sm border-sky-600 border-solid border rounded-sm text-sky-600 hover:bg-sky-600 hover:text-white"
               type="button"
               title="Редактировать"
@@ -225,10 +291,12 @@ onMounted(async () => {
         </Column>
       </DataTable>
 
+      <Toast />
+
       <Dialog
         v-model:visible="visible"
         modal
-        header="Редактирование"
+        :header="dialogHeader"
         :draggable="false"
         :style="{ width: '100%', maxWidth: '30rem' }"
       >
@@ -256,7 +324,8 @@ onMounted(async () => {
               placeholder="Выберите время"
               class="w-full"
               size="small"
-              @change="console.log()"
+              :invalid="validationError"
+              @change="startEndValidation()"
             />
           </div>
 
@@ -269,13 +338,20 @@ onMounted(async () => {
               placeholder="Выберите время"
               class="w-full"
               size="small"
+              :invalid="validationError"
+              @change="startEndValidation()"
             />
           </div>
         </div>
 
-        <div class="flex flex-wrap gap-2">
-          <Toast />
+        <div
+          v-if="validationError"
+          class="p-2 mb-4 border-solid border rounded-sm bg-red-100 border-red-800 text-red-800"
+        >
+          Ошибка! Время начала проверки не может быть равно или больше времени конца проверки!
+        </div>
 
+        <div class="flex flex-wrap gap-2">
           <ConfirmDialog group="headless">
             <template #container="{ message, acceptCallback, rejectCallback }">
               <div class="flex flex-col items-center p-8 bg-surface-0 dark:bg-surface-900 rounded">
@@ -305,16 +381,17 @@ onMounted(async () => {
           </ConfirmDialog>
 
           <button
-            class="mr-auto cursor-pointer py-2 px-3 text-sm border-red-700 bg-red-700 border-solid border rounded-sm text-white hover:bg-red-600"
+            class="cursor-pointer py-2 px-3 text-sm border-red-700 bg-red-700 border-solid border rounded-sm text-white hover:bg-red-600"
             type="button"
             label="Удалить запись"
+            v-if="currentNoticeId"
             @click="deleteConfirm()"
           >
             Удалить запись
           </button>
 
           <button
-            class="cursor-pointer py-2 px-3 text-sm border-slate-700 bg-slate-700 border-solid border rounded-sm text-white hover:bg-slate-600"
+            class="ml-auto cursor-pointer py-2 px-3 text-sm border-slate-700 bg-slate-700 border-solid border rounded-sm text-white hover:bg-slate-600"
             type="button "
             label="Закрыть"
             @click="visible = false"
@@ -323,10 +400,12 @@ onMounted(async () => {
           </button>
 
           <button
-            class="cursor-pointer py-2 px-3 text-sm border-sky-700 bg-sky-700 border-solid border rounded-sm text-white hover:bg-sky-600"
+            class="cursor-pointer py-2 px-3 text-sm border-sky-700 bg-sky-700 border-solid border rounded-sm text-white hover:bg-sky-600 disabled:bg-slate-200 disabled:cursor-default disabled:text-slate-700 disabled:border-slate-400"
             type="button"
             label="Сохранить"
-            @click="updateNotice(currentNoticeId)"
+            v-if="start && end && timezone"
+            :disabled="validationError"
+            @click="updateNotices(currentNoticeId)"
           >
             Сохранить
           </button>
