@@ -13,6 +13,8 @@ import { FilterMatchMode } from '@primevue/core/api'
 
 import moment from 'moment'
 
+import { DAYS, API_BASE_URL } from '@/constants'
+
 const marks = ref([]) //данные для таблицы
 
 const dt = ref(null) //ссылка на таблицу
@@ -23,8 +25,8 @@ const dtRows = ref(5) //стартовое кол-во строк таблицы
 
 const dtPageCount = ref(0) //кол-во страниц до появления данных
 
+//фильтры по колонкам
 const filters = ref({
-  //фильтры по колонкам
   day: { value: null, matchMode: FilterMatchMode.EQUALS },
   location: { value: null, matchMode: FilterMatchMode.EQUALS },
   name: { value: null, matchMode: FilterMatchMode.EQUALS },
@@ -39,8 +41,8 @@ const loading = ref(false) //отметка о загрузке
 
 const dataLoaded = ref(false) //отметка о том что данные получены
 
+//колонки
 const columns = ref([
-  //колонки
   { field: 'date', header: 'Дата' },
   { field: 'day', header: 'День недели', filter: true },
   { field: 'location', header: 'Местоположение', filter: true },
@@ -60,53 +62,42 @@ const rangeStart = ref(new Date()) //начало периода выборки
 
 const rangeEnd = ref(new Date()) //конец периода выборки
 
+//функция обновления периода выборки
 function recieveDatesRange(range) {
-  //функция обновления периода выборки
   rangeStart.value = range.start
   rangeEnd.value = range.end
   getMarks()
 }
 
-const daysOrder = [
-  //порядок сортировки дней в фильтре
-  'Понедельник',
-  'Вторник',
-  'Среда',
-  'Четверг',
-  'Пятница',
-  'Суббота',
-  'Воскресенье',
-]
-
+//поля данных для экспорта
 let json_fields = {
-  //поля данных для экспорта
-  'Дата': {
+  Дата: {
     field: 'date',
     callback: (value) => {
       return `${moment.unix(value).format('DD.MM.YYYY')}`
     },
   },
   'День недели': 'day',
-  'Местоположение': 'location',
-  'ФИО': 'name',
-  'Должность': 'position',
+  Местоположение: 'location',
+  ФИО: 'name',
+  Должность: 'position',
   'Часы по графику': 'graphic',
   'Часы факт': 'fact',
-  'Приход': 'in',
-  'Уход': 'out',
-  'Опоздание': 'late',
-  'Недоработка': 'defect',
+  Приход: 'in',
+  Уход: 'out',
+  Опоздание: 'late',
+  Недоработка: 'defect',
   'Ранний уход': 'late_out',
-  'Оповещение': 'notify',
+  Оповещение: 'notify',
 }
 
+//получение данных
 const getMarks = async () => {
-  //получение данных
   loading.value = true
 
   try {
     const { data } = await axios.get(
-      `http://localhost:3000/marks?date_gte=${moment(
+      `${API_BASE_URL}/marks?date_gte=${moment(
         rangeStart.value,
         'DD-MM-YYYY',
       ).unix()}&date_lte=${moment(rangeEnd.value, 'DD-MM-YYYY').unix()}`,
@@ -121,7 +112,7 @@ const getMarks = async () => {
         if (col.field === 'day') {
           //сортировка значений для фильтров
           uniqueValues.sort((a, b) => {
-            return daysOrder.indexOf(a) - daysOrder.indexOf(b)
+            return DAYS.indexOf(a) - DAYS.indexOf(b)
           })
         } else {
           uniqueValues.sort()
@@ -147,18 +138,18 @@ const getMarks = async () => {
   }
 }
 
+//функция получения текущей страницы
 const getPage = (event) => {
-  //функция получения текущей страницы
   dtPage.value = event.page + 1
 }
 
+//функция получения кол-ва строк на странице
 const getRows = (event) => {
-  //функция получения кол-ва строк на странице
   dtRows.value = event
 }
 
+//подготовка массива данных для экспорта в excel с учетом постранички
 const exportFilteredData = () => {
-  //подготовка массива данных для экспорта в excel с учетом постранички
   const displayedData = dt.value.processedData
 
   if (displayedData.length <= dtRows.value) {
@@ -171,8 +162,8 @@ const exportFilteredData = () => {
   }
 }
 
+//функция обновления отметки о загрузке данных при фильтрации
 const onFilter = (event) => {
-  //функция обновления отметки о загрузке данных при фильтрации
   if (event.filteredValue.length > 0) {
     dataLoaded.value = true
   } else {
@@ -180,8 +171,8 @@ const onFilter = (event) => {
   }
 }
 
+//получаем данные на маунт приложения
 onMounted(async () => {
-  //получаем данные на маунт приложения
   await getMarks()
 })
 </script>
@@ -253,7 +244,8 @@ onMounted(async () => {
             data[col.field]
           }}</span>
           <span v-else-if="col.field === 'notify'">
-            {{ data[col.field]}} <span v-if="data.notify_list" class="text-red-500">({{ data.notify_list }})</span>
+            {{ data[col.field] }}
+            <span v-if="data.notify_list" class="text-red-500">({{ data.notify_list }})</span>
           </span>
           <span v-else>{{ data[col.field] }}</span>
         </template>

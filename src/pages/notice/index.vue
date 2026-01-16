@@ -13,11 +13,12 @@ import ConfirmDialog from 'primevue/confirmdialog'
 import { useConfirm } from 'primevue/useconfirm'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
+import { TIMEZONES, HOURS, API_BASE_URL } from '@/constants';
 
 //уведомление об обновлении данных
 const toast = useToast()
 
-const updateConfirmation = (severity, summary, detail) => {
+const notification = (severity, summary, detail) => {
   toast.add({ severity: severity, summary: summary, detail: detail, life: 3000 })
 }
 
@@ -46,57 +47,14 @@ const start = ref() //время начала проверки
 
 const end = ref() //время конца проверки
 
-//таймзоны
-const timezones = [
-  { key: '-1', value: 'Калининград (МСК-1)' },
-  { key: '0', value: 'Москва (МСК)' },
-  { key: '1', value: 'Самара (МСК+1)' },
-  { key: '2', value: 'Екатеринбург (МСК+2)' },
-  { key: '3', value: 'Омск (МСК+3)' },
-  { key: '4', value: 'Красноярск (МСК+4)' },
-  { key: '5', value: 'Иркутск (МСК+5)' },
-  { key: '6', value: 'Якутск (МСК+6)' },
-  { key: '7', value: 'Владивосток (МСК+7)' },
-  { key: '8', value: 'Магадан (МСК+8)' },
-  { key: '9', value: 'Камчатка (МСК+9)' },
-]
-
 const timezone = ref() //таймзона
-
-//часы для наполнения селектов
-const hours = [
-  '01:00',
-  '02:00',
-  '03:00',
-  '04:00',
-  '05:00',
-  '06:00',
-  '07:00',
-  '08:00',
-  '09:00',
-  '10:00',
-  '11:00',
-  '12:00',
-  '13:00',
-  '14:00',
-  '15:00',
-  '16:00',
-  '17:00',
-  '18:00',
-  '19:00',
-  '20:00',
-  '21:00',
-  '22:00',
-  '23:00',
-  '00:00',
-]
 
 //получение данных
 const getNotices = async () => {
   loading.value = true
 
   try {
-    const { data } = await axios.get('http://localhost:3000/notices')
+    const { data } = await axios.get(`${API_BASE_URL}/notices`)
 
     notices.value = data //обновляем переменную данных для таблицы
   } catch (error) {
@@ -131,14 +89,12 @@ const noticeDialogOpen = (id) => {
   visible.value = true
 }
 
-//удаление записи об уведомлении
+//удаление уведомления
 const removeNotice = async (id) => {
   loading.value = true
 
-  await getNotices()
-
   try {
-    await axios.delete(`http://localhost:3000/notices/${id}`)
+    await axios.delete(`${API_BASE_URL}/notices/${id}`)
 
     //обнуляем значения переменных
     currentNotice.value = null
@@ -147,7 +103,7 @@ const removeNotice = async (id) => {
     end.value = null
     timezone.value = null
 
-    updateConfirmation('error', 'Информация', 'Запись удалена')
+    notification('error', 'Информация', 'Запись удалена')
 
     await getNotices()
 
@@ -163,7 +119,7 @@ const removeNotice = async (id) => {
 const validationError = ref(false)
 
 const startEndValidation = () => {
-  if (hours.indexOf(end.value) <= hours.indexOf(start.value)) {
+  if (HOURS.indexOf(end.value) <= HOURS.indexOf(start.value)) {
     validationError.value = true
   } else {
     validationError.value = false
@@ -174,11 +130,9 @@ const startEndValidation = () => {
 const updateNotices = async (id) => {
   loading.value = true
 
-  await getNotices()
-
   if (id) {
     try {
-      await axios.patch(`http://localhost:3000/notices/${id}`, {
+      await axios.patch(`${API_BASE_URL}/notices/${id}`, {
         id: currentNoticeId.value,
         timezone: timezone.value,
         start: start.value,
@@ -187,7 +141,7 @@ const updateNotices = async (id) => {
 
       await getNotices() //получаем обновленные данные после обновления записи
 
-      updateConfirmation('info', 'Информация', 'Запись обновлена')
+      notification('info', 'Информация', 'Запись обновлена')
 
       visible.value = false
     } catch (error) {
@@ -196,6 +150,7 @@ const updateNotices = async (id) => {
       loading.value = false
     }
   } else {
+    //убрать id (должно формироваться на сервере)
     let newNoticeId = 0
 
     if (notices.value.length > 0) {
@@ -212,11 +167,11 @@ const updateNotices = async (id) => {
     }
 
     try {
-      await axios.post('http://localhost:3000/notices', newItem)
+      await axios.post(`${API_BASE_URL}/notices`, newItem)
 
       await getNotices()
 
-      updateConfirmation('success', 'Информация', 'Запись добавлена')
+      notification('success', 'Информация', 'Запись добавлена')
 
       visible.value = false
     } catch (error) {
@@ -268,7 +223,7 @@ onMounted(async () => {
 
         <Column field="timezone" header="Часовой пояс">
           <template #body="slotProps">{{
-            timezones.find((timezone) => timezone.key === slotProps.data.timezone).value
+            TIMEZONES.find((timezone) => timezone.key === slotProps.data.timezone).value
           }}</template>
         </Column>
 
@@ -304,7 +259,7 @@ onMounted(async () => {
 
         <Select
           v-model="timezone"
-          :options="timezones"
+          :options="TIMEZONES"
           optionLabel="value"
           optionValue="key"
           placeholder="Выберите часовой пояс"
@@ -320,7 +275,7 @@ onMounted(async () => {
 
             <Select
               v-model="start"
-              :options="hours"
+              :options="HOURS"
               placeholder="Выберите время"
               class="w-full"
               size="small"
@@ -334,7 +289,7 @@ onMounted(async () => {
 
             <Select
               v-model="end"
-              :options="hours"
+              :options="HOURS"
               placeholder="Выберите время"
               class="w-full"
               size="small"
