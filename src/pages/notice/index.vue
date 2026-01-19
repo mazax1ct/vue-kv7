@@ -118,8 +118,8 @@ const removeNotice = async (id) => {
 //валидация времени начала и конца проверки
 const validationError = ref(false)
 
-const startEndValidation = () => {
-  if (HOURS.indexOf(end.value) <= HOURS.indexOf(start.value)) {
+const startEndValidation = (start, end) => {
+  if (HOURS.indexOf(start) >= HOURS.indexOf(end)) {
     validationError.value = true
   } else {
     validationError.value = false
@@ -280,7 +280,7 @@ onMounted(async () => {
               class="w-full"
               size="small"
               :invalid="validationError"
-              @change="startEndValidation()"
+              @change="startEndValidation(start, end)"
             />
           </div>
 
@@ -294,7 +294,7 @@ onMounted(async () => {
               class="w-full"
               size="small"
               :invalid="validationError"
-              @change="startEndValidation()"
+              @change="startEndValidation(start, end)"
             />
           </div>
         </div>
