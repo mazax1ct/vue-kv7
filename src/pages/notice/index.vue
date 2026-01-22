@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 
 import axios from 'axios'
 
@@ -7,13 +7,16 @@ import AdminLayout from '@/layouts/AdminLayout.vue'
 
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
+import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
 import Select from 'primevue/select'
 import ConfirmDialog from 'primevue/confirmdialog'
 import { useConfirm } from 'primevue/useconfirm'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
-import { TIMEZONES, HOURS, API_BASE_URL } from '@/constants';
+import HoursPeriod from '@/components/HoursPeriod.vue'
+import { TIMEZONES, HOURS, API_BASE_URL } from '@/constants'
+import { useHoursPeriodsValidation } from '@/composables/dialog'
 
 //уведомление об обновлении данных
 const toast = useToast()
@@ -67,7 +70,7 @@ const getNotices = async () => {
 const dialogHeader = ref()
 
 //функция обновления данных в попапе
-const noticeDialogOpen = (id) => {
+const updateNoticeDialogOnOpen = (id) => {
   if (id) {
     dialogHeader.value = 'Редактирование'
 
@@ -115,15 +118,34 @@ const removeNotice = async (id) => {
   }
 }
 
-//валидация времени начала и конца проверки
-const validationError = ref(false)
+//отметка о валидности времени начала и конца проверки
+const errors = ref([])
 
-const startEndValidation = (start, end) => {
-  if (HOURS.indexOf(start) >= HOURS.indexOf(end)) {
-    validationError.value = true
+const validationErrors = computed(() => {
+  const errorExist = errors.value.find((errEl) => errEl.error === true)
+
+  if (errorExist) {
+    return true
   } else {
-    validationError.value = false
+    return false
   }
+})
+
+//функция приёма данных из компонента выбора времени
+function recieveHoursRange(range, err) {
+  start.value = range.start
+  end.value = range.end
+
+  //пишем/обновляем ошибку в массиве ошибок
+  const error = errors.value.find((errEl) => errEl.id === err.id)
+
+  if (!error) {
+    errors.value.push(err)
+  } else {
+    error.error = err.error
+  }
+
+  console.log(errors.value)
 }
 
 //обновление записи об уведомлении
@@ -192,13 +214,13 @@ onMounted(async () => {
   <AdminLayout>
     <div class="mx-auto max-w-5xl pt-4">
       <div class="text-right mb-4">
-        <button
-          class="cursor-pointer py-2 px-3 text-sm border-sky-700 bg-sky-700 border-solid border rounded-sm text-white hover:bg-sky-600"
+        <Button
           type="button"
-          @click="noticeDialogOpen()"
-        >
-          Добавить уведомление
-        </button>
+          severity="info"
+          label="Добавить уведомление"
+          :loading="loading"
+          @click="updateNoticeDialogOnOpen()"
+        />
       </div>
 
       <DataTable
@@ -233,15 +255,14 @@ onMounted(async () => {
 
         <Column field="id" style="width: 155px">
           <template #body="slotProps">
-            <button
-              label="Show"
-              @click="noticeDialogOpen(slotProps.data.id)"
-              class="cursor-pointer py-2 px-3 text-sm border-sky-600 border-solid border rounded-sm text-sky-600 hover:bg-sky-600 hover:text-white"
+            <Button
               type="button"
-              title="Редактировать"
-            >
-              Редактировать
-            </button>
+              severity="info"
+              variant="outlined"
+              label="Редактировать"
+              :loading="loading"
+              @click="updateNoticeDialogOnOpen(slotProps.data.id)"
+            />
           </template>
         </Column>
       </DataTable>
@@ -265,45 +286,21 @@ onMounted(async () => {
           placeholder="Выберите часовой пояс"
           class="w-full mb-4"
           size="small"
+          :invalid="!timezone"
         />
 
         <p class="mb-2 text-sm font-semibold">Время работы</p>
 
-        <div class="flex flex-wrap gap-4 mb-4">
-          <div style="width: calc(100% / 2 - var(--spacing) * 4 / 2)">
-            <p class="mb-1">Начало проверки</p>
-
-            <Select
-              v-model="start"
-              :options="HOURS"
-              placeholder="Выберите время"
-              class="w-full"
-              size="small"
-              :invalid="validationError"
-              @change="startEndValidation(start, end)"
-            />
-          </div>
-
-          <div style="width: calc(100% / 2 - var(--spacing) * 4 / 2)">
-            <p class="mb-1">Конец проверки</p>
-
-            <Select
-              v-model="end"
-              :options="HOURS"
-              placeholder="Выберите время"
-              class="w-full"
-              size="small"
-              :invalid="validationError"
-              @change="startEndValidation(start, end)"
-            />
-          </div>
-        </div>
-
-        <div
-          v-if="validationError"
-          class="p-2 mb-4 border-solid border rounded-sm bg-red-100 border-red-800 text-red-800"
-        >
-          Ошибка! Время начала проверки не может быть равно или больше времени конца проверки!
+        <div class="mb-4">
+          <HoursPeriod
+            @sendHoursRange="recieveHoursRange"
+            :id="'notice'"
+            :start="start"
+            :end="end"
+            start_title="Начало проверки"
+            end_title="Конец проверки"
+            error_text="Ошибка! Время начала и конца проверки не может быть пустым, а так же время начала проверки не может быть равно или больше времени конца проверки!"
+          />
         </div>
 
         <div class="flex flex-wrap gap-2">
@@ -315,55 +312,50 @@ onMounted(async () => {
                 <p class="mb-2">{{ message.message }}</p>
 
                 <div class="flex items-center gap-2 mt-6">
-                  <button
+                  <Button
+                    type="button"
+                    severity="danger"
+                    label="Удалить"
+                    :loading="loading"
                     @click="removeNotice(currentNoticeId)"
-                    class="cursor-pointer py-2 px-3 text-sm border-red-700 bg-red-700 border-solid border rounded-sm text-white hover:bg-red-600"
-                    type="button"
-                  >
-                    Удалить
-                  </button>
+                  />
 
-                  <button
-                    @click="rejectCallback"
-                    class="cursor-pointer py-2 px-3 text-sm border-slate-700 bg-slate-700 border-solid border rounded-sm text-white hover:bg-slate-600"
+                  <Button
                     type="button"
-                  >
-                    Отмена
-                  </button>
+                    severity="contrast"
+                    label="Отмена"
+                    @click="rejectCallback"
+                  />
                 </div>
               </div>
             </template>
           </ConfirmDialog>
 
-          <button
-            class="cursor-pointer py-2 px-3 text-sm border-red-700 bg-red-700 border-solid border rounded-sm text-white hover:bg-red-600"
-            type="button"
-            label="Удалить запись"
+          <Button
             v-if="currentNoticeId"
+            type="button"
+            severity="danger"
+            label="Удалить"
             @click="deleteConfirm()"
-          >
-            Удалить запись
-          </button>
+          />
 
-          <button
-            class="ml-auto cursor-pointer py-2 px-3 text-sm border-slate-700 bg-slate-700 border-solid border rounded-sm text-white hover:bg-slate-600"
-            type="button "
+          <Button
+            class="ml-auto"
+            type="button"
+            severity="contrast"
             label="Закрыть"
             @click="visible = false"
-          >
-            Закрыть
-          </button>
+          />
 
-          <button
-            class="cursor-pointer py-2 px-3 text-sm border-sky-700 bg-sky-700 border-solid border rounded-sm text-white hover:bg-sky-600 disabled:bg-slate-200 disabled:cursor-default disabled:text-slate-700 disabled:border-slate-400"
-            type="button"
-            label="Сохранить"
+          <Button
             v-if="start && end && timezone"
-            :disabled="validationError"
+            type="button"
+            severity="success"
+            label="Сохранить"
+            :loading="loading"
+            :disabled="validationErrors"
             @click="updateNotices(currentNoticeId)"
-          >
-            Сохранить
-          </button>
+          />
         </div>
       </Dialog>
     </div>

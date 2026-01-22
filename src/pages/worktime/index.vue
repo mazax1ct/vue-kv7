@@ -14,7 +14,7 @@ import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Checkbox from 'primevue/checkbox'
 import HoursPeriod from '@/components/HoursPeriod.vue'
-import { API_BASE_URL, DAYS_NUM_NAMES, TIMEZONES, DAYS, HOURS } from '@/constants'
+import { API_BASE_URL, DAYS_NUM_NAMES, TIMEZONES, DAYS } from '@/constants'
 
 const depts = ref([]) //департаменты
 
@@ -34,7 +34,7 @@ const work_time = ref()
 const all_week = ref(false)
 const all_week_start = ref()
 const all_week_end = ref()
-const day_work_time = ref([])
+const work_time_by_days = ref()
 /*********данные для департамента*********/
 
 /*********данные для сотрудника*********/
@@ -92,15 +92,21 @@ const makeResult = (depts, workers) => {
   depts.value.forEach((dept) => {
     combinedArray.push(dept)
 
+    //фильтруем массив сотрудников по id департамента
     let deptWorkers = workers.value.filter((item) => item.department_id === parseInt(dept.id))
 
+    //если время работы у сотрудника пустое, дописываем время работы сотруднику из свойств департамента
     const deptWorkersWithWorkIntervals = deptWorkers.map(function (deptWorker) {
-      if(typeof deptWorker.work_intervals_short !== 'object' || Object.keys(deptWorker.work_intervals_short).length === 0) {
-        deptWorker.work_intervals_short = depts.value.find(item => item.id === dept.id).work_intervals_short
+      if (deptWorker.work_intervals_short.length === 0) {
+        deptWorker.work_intervals_short = depts.value.find(
+          (item) => item.id === dept.id,
+        ).work_intervals_short
       }
 
-      if(typeof deptWorker.work_intervals_full !== 'object' || Object.keys(deptWorker.work_intervals_full).length === 0) {
-        deptWorker.work_intervals_full = depts.value.find(item => item.id === dept.id).work_intervals_full
+      if (deptWorker.work_intervals_full.length === 0) {
+        deptWorker.work_intervals_full = depts.value.find(
+          (item) => item.id === dept.id,
+        ).work_intervals_full
       }
 
       return deptWorker
@@ -114,15 +120,16 @@ const makeResult = (depts, workers) => {
   result.value = combinedArray
 }
 
-const updateDayWorkTime = (index, value) => {
-  if (!day_work_time.value.indexOf(index)) {
-    day_work_time.value.splice(index, 0, value)
-  }
-}
+//отметка о валидности времени начала и конца рабочего дня
+const validationError = ref([])
 
-function recieveHoursRange(range) {
+function recieveHoursRange(range, error) {
   all_week_start.value = range.start
   all_week_end.value = range.end
+
+  validationError.value = error
+
+  //console.log(validationError.value, 'в родителе')
 }
 
 //функция обновления данных в попапе
@@ -133,16 +140,31 @@ const worktimeDialogOpen = (id, type) => {
     timezone.value = depts.value.find((item) => item.id === id).timezone
     work_time.value = depts.value.find((item) => item.id === id).work_time
 
+    //устанавливаем отметку о графике на всю неделю
     const workIntervalsShort = depts.value.find((item) => item.id === id).work_intervals_short
-    const keys = Object.keys(workIntervalsShort)
-    const emptyWorkIntervalsShort = keys.length === 0
 
-    if (emptyWorkIntervalsShort || keys[0] === '0') {
+    if (workIntervalsShort.length > 0 && workIntervalsShort[0].day_start === 0) {
       all_week.value = true
-      all_week_start.value = workIntervalsShort[keys[0]].work_start
-      all_week_end.value = workIntervalsShort[keys[0]].work_end
+      all_week_start.value = workIntervalsShort[0].work_start
+      all_week_end.value = workIntervalsShort[0].work_end
     } else {
       all_week.value = false
+      all_week_start.value = null
+      all_week_end.value = null
+    }
+
+    //дописываем отметку о выходном дне
+    const workIntervalsFull = depts.value.find((item) => item.id === id).work_intervals_full
+
+    if (workIntervalsFull.length > 0) {
+      const checkAddedWorkIntervalsFull = workIntervalsFull.map(function (interval) {
+        return {
+          ...interval,
+          checked: false,
+        }
+      })
+
+      work_time_by_days.value = checkAddedWorkIntervalsFull
     }
   } else {
     console.log('сотрудник')
@@ -310,6 +332,7 @@ onMounted(async () => {
       <div v-if="all_week" class="mb-4">
         <HoursPeriod
           @sendHoursRange="recieveHoursRange"
+          :id="'all_week'"
           :start="all_week_start"
           :end="all_week_end"
           start_title="Начало рабочего дня"
@@ -318,7 +341,7 @@ onMounted(async () => {
         />
       </div>
 
-      <div v-else>
+      <div v-else-if="work_time_by_days">
         <p class="mb-2 text-sm font-semibold">График по дням</p>
 
         <div v-for="(day, index) in DAYS" :key="index" class="mb-2">
@@ -330,19 +353,18 @@ onMounted(async () => {
                 :binary="true"
                 :inputId="'day_' + index"
                 :name="'worktime_' + index + '_free'"
-                value=""
-                v-model="day_work_time[index]"
-                @change="updateDayWorkTime(index, value)"
+                v-model="work_time_by_days[index].checked"
               />
               <label :for="'day_' + index">Выходной</label>
             </div>
           </div>
 
-          <div v-if="day_work_time[index]" class="mt-2">
+          <div v-if="!work_time_by_days[index].checked" class="mt-2">
             <HoursPeriod
               @sendHoursRange="recieveHoursRange"
-              :start="all_week_start"
-              :end="all_week_end"
+              :id="String(index)"
+              :start="work_time_by_days[index].work_start"
+              :end="work_time_by_days[index].work_end"
               start_title="Начало рабочего дня"
               end_title="Конец рабочего дня"
               error_text="Ошибка! Время начала рабочего дня не может быть равно или больше времени конца рабочего дня!"
@@ -365,6 +387,7 @@ onMounted(async () => {
           class="cursor-pointer py-2 px-3 text-sm border-sky-700 bg-sky-700 border-solid border rounded-sm text-white hover:bg-sky-600 disabled:bg-slate-200 disabled:cursor-default disabled:text-slate-700 disabled:border-slate-400"
           type="button"
           label="Сохранить"
+          :disabled="validationError.length > 0"
         >
           Сохранить
         </button>
