@@ -1,22 +1,25 @@
 <script setup>
 import { onMounted, ref, computed } from 'vue'
 
-import axios from 'axios'
-
 import AdminLayout from '@/layouts/AdminLayout.vue'
-
 import DataTable from 'primevue/datatable'
 import Column from 'primevue/column'
 import Button from 'primevue/button'
 import Dialog from 'primevue/dialog'
-import Select from 'primevue/select'
-import ConfirmDialog from 'primevue/confirmdialog'
-import { useConfirm } from 'primevue/useconfirm'
+import NoticeEditForm from '@/components/NoticeEditForm.vue'
 import Toast from 'primevue/toast'
 import { useToast } from 'primevue/usetoast'
-import HoursPeriod from '@/components/HoursPeriod.vue'
-import { TIMEZONES, HOURS, API_BASE_URL } from '@/constants'
-import { useHoursPeriodsValidation } from '@/composables/dialog'
+
+import { TIMEZONES } from '@/constants'
+
+import { useNoticesStore } from '@/stores/notices'
+import { storeToRefs } from 'pinia'
+
+const noticesStore = useNoticesStore() //получаем доступ к стору
+
+const { isLoading, notices, error } = storeToRefs(noticesStore) //деструктуризация данных из стора
+
+const { fetchNotices, getNotice, updateNotice, createNotice, deleteNotice } = noticesStore
 
 //уведомление об обновлении данных
 const toast = useToast()
@@ -25,97 +28,41 @@ const notification = (severity, summary, detail) => {
   toast.add({ severity: severity, summary: summary, detail: detail, life: 3000 })
 }
 
-//попап подтверждения удаления записи
-const confirm = useConfirm()
-
-const deleteConfirm = () => {
-  confirm.require({
-    group: 'headless',
-    header: 'Подтверждение',
-    message: 'Вы уверены, что хотите удалить запись?',
-  })
-}
-
-const notices = ref([]) //данные для таблицы
+const noticeDefault = ref({
+  id: '',
+  timezone: '',
+  start: '',
+  end: '',
+})
 
 const loading = ref(false) //отметка о загрузке
 
 const visible = ref(false) //отметка о видимости диалога
 
-const currentNotice = ref(null)
+const currentNoticeId = ref(0) //id увеломления
 
-const currentNoticeId = ref(null)
-
-const start = ref() //время начала проверки
-
-const end = ref() //время конца проверки
-
-const timezone = ref() //таймзона
-
-//получение данных
-const getNotices = async () => {
-  loading.value = true
-
-  try {
-    const { data } = await axios.get(`${API_BASE_URL}/notices`)
-
-    notices.value = data //обновляем переменную данных для таблицы
-  } catch (error) {
-    console.error('Failed to fetch data:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-const dialogHeader = ref()
+const dialogHeader = ref('') //заголовок диалога
 
 //функция обновления данных в попапе
 const updateNoticeDialogOnOpen = (id) => {
   if (id) {
     dialogHeader.value = 'Редактирование'
 
-    currentNotice.value = notices.value.find((notice) => notice.id === id)
-
-    currentNoticeId.value = currentNotice.value.id
-    start.value = currentNotice.value.start
-    end.value = currentNotice.value.end
-    timezone.value = currentNotice.value.timezone
+    currentNoticeId.value = id
   } else {
     dialogHeader.value = 'Создание записи'
-
     currentNoticeId.value = null
-    start.value = null
-    end.value = null
-    timezone.value = null
+    noticeDefault.value = {
+      id: '',
+      timezone: '',
+      start: '',
+      end: '',
+    }
+
+    console.log(currentNoticeId.value, noticeDefault.value)
   }
 
   visible.value = true
-}
-
-//удаление уведомления
-const removeNotice = async (id) => {
-  loading.value = true
-
-  try {
-    await axios.delete(`${API_BASE_URL}/notices/${id}`)
-
-    //обнуляем значения переменных
-    currentNotice.value = null
-    currentNoticeId.value = null
-    start.value = null
-    end.value = null
-    timezone.value = null
-
-    notification('error', 'Информация', 'Запись удалена')
-
-    await getNotices()
-
-    visible.value = false
-  } catch (error) {
-    console.error('Failed to fetch data:', error)
-  } finally {
-    loading.value = false
-  }
 }
 
 //отметка о валидности времени начала и конца проверки
@@ -131,82 +78,37 @@ const validationErrors = computed(() => {
   }
 })
 
-//функция приёма данных из компонента выбора времени
-function recieveHoursRange(range, err) {
-  start.value = range.start
-  end.value = range.end
-
-  //пишем/обновляем ошибку в массиве ошибок
-  const error = errors.value.find((errEl) => errEl.id === err.id)
-
-  if (!error) {
-    errors.value.push(err)
-  } else {
-    error.error = err.error
-  }
-
-  console.log(errors.value)
+const recieveCloseDialog = () => {
+  visible.value = !visible.value
 }
 
-//обновление записи об уведомлении
-const updateNotices = async (id) => {
-  loading.value = true
+const recieveUpdateNotice = (notice) => {
+  updateNotice(notice)
 
-  if (id) {
-    try {
-      await axios.patch(`${API_BASE_URL}/notices/${id}`, {
-        id: currentNoticeId.value,
-        timezone: timezone.value,
-        start: start.value,
-        end: end.value,
-      })
+  notification('info', 'Информация', 'Запись обновлена')
 
-      await getNotices() //получаем обновленные данные после обновления записи
+  visible.value = false
+}
 
-      notification('info', 'Информация', 'Запись обновлена')
+const recieveCreateNotice = (notice) => {
+  createNotice(notice)
 
-      visible.value = false
-    } catch (error) {
-      console.error('Failed to fetch data:', error)
-    } finally {
-      loading.value = false
-    }
-  } else {
-    //убрать id (должно формироваться на сервере)
-    let newNoticeId = 0
+  notification('success', 'Информация', 'Запись добавлена')
 
-    if (notices.value.length > 0) {
-      newNoticeId = parseInt(notices.value.at(-1).id) + 1
-    } else {
-      newNoticeId = 1
-    }
+  visible.value = false
+}
 
-    const newItem = {
-      id: newNoticeId,
-      timezone: timezone.value,
-      start: start.value,
-      end: end.value,
-    }
+const recieveDeleteNotice = () => {
+  deleteNotice(currentNoticeId.value)
 
-    try {
-      await axios.post(`${API_BASE_URL}/notices`, newItem)
+  notification('error', 'Информация', 'Запись удалена')
 
-      await getNotices()
-
-      notification('success', 'Информация', 'Запись добавлена')
-
-      visible.value = false
-    } catch (error) {
-      console.error('Failed to fetch data:', error)
-    } finally {
-      loading.value = false
-    }
-  }
+  visible.value = false
 }
 
 //получаем данные на маунт приложения
 onMounted(async () => {
-  await getNotices()
+  fetchNotices()
 })
 </script>
 
@@ -229,7 +131,7 @@ onMounted(async () => {
         dataKey="id"
         :value="notices"
         showGridlines
-        :loading="loading"
+        :loading="isLoading"
         paginator
         :rows="20"
         :rowsPerPageOptions="[5, 10, 20, 50]"
@@ -244,9 +146,9 @@ onMounted(async () => {
         </template>
 
         <Column field="timezone" header="Часовой пояс">
-          <template #body="slotProps">{{
-            TIMEZONES.find((timezone) => timezone.key === slotProps.data.timezone).value
-          }}</template>
+          <template #body="slotProps">
+            {{ TIMEZONES.find((timezone) => timezone.key === slotProps.data.timezone).value }}
+          </template>
         </Column>
 
         <Column field="start" header="Начало"></Column>
@@ -261,7 +163,7 @@ onMounted(async () => {
               variant="outlined"
               label="Редактировать"
               :loading="loading"
-              @click="updateNoticeDialogOnOpen(slotProps.data.id)"
+              @click="(updateNoticeDialogOnOpen(slotProps.data.id), console.log(slotProps.data.id))"
             />
           </template>
         </Column>
@@ -276,87 +178,13 @@ onMounted(async () => {
         :draggable="false"
         :style="{ width: '100%', maxWidth: '30rem' }"
       >
-        <p class="mb-2 text-sm font-semibold">Часовой пояс</p>
-
-        <Select
-          v-model="timezone"
-          :options="TIMEZONES"
-          optionLabel="value"
-          optionValue="key"
-          placeholder="Выберите часовой пояс"
-          class="w-full mb-4"
-          size="small"
-          :invalid="!timezone"
-        />
-
-        <p class="mb-2 text-sm font-semibold">Время работы</p>
-
-        <div class="mb-4">
-          <HoursPeriod
-            @sendHoursRange="recieveHoursRange"
-            :id="'notice'"
-            :start="start"
-            :end="end"
-            start_title="Начало проверки"
-            end_title="Конец проверки"
-            error_text="Ошибка! Время начала и конца проверки не может быть пустым, а так же время начала проверки не может быть равно или больше времени конца проверки!"
-          />
-        </div>
-
-        <div class="flex flex-wrap gap-2">
-          <ConfirmDialog group="headless">
-            <template #container="{ message, acceptCallback, rejectCallback }">
-              <div class="flex flex-col items-center p-8 bg-surface-0 dark:bg-surface-900 rounded">
-                <h5 class="font-bold text-2xl block mb-2">{{ message.header }}</h5>
-
-                <p class="mb-2">{{ message.message }}</p>
-
-                <div class="flex items-center gap-2 mt-6">
-                  <Button
-                    type="button"
-                    severity="danger"
-                    label="Удалить"
-                    :loading="loading"
-                    @click="removeNotice(currentNoticeId)"
-                  />
-
-                  <Button
-                    type="button"
-                    severity="contrast"
-                    label="Отмена"
-                    @click="rejectCallback"
-                  />
-                </div>
-              </div>
-            </template>
-          </ConfirmDialog>
-
-          <Button
-            v-if="currentNoticeId"
-            type="button"
-            severity="danger"
-            label="Удалить"
-            @click="deleteConfirm()"
-          />
-
-          <Button
-            class="ml-auto"
-            type="button"
-            severity="contrast"
-            label="Закрыть"
-            @click="visible = false"
-          />
-
-          <Button
-            v-if="start && end && timezone"
-            type="button"
-            severity="success"
-            label="Сохранить"
-            :loading="loading"
-            :disabled="validationErrors"
-            @click="updateNotices(currentNoticeId)"
-          />
-        </div>
+        <NoticeEditForm
+          @sendCloseDialog="recieveCloseDialog"
+          @sendUpdateNotice="recieveUpdateNotice"
+          @sendCreateNotice="recieveCreateNotice"
+          @sendDeleteNotice="recieveDeleteNotice"
+          :notice="currentNoticeId ? getNotice(currentNoticeId) : noticeDefault"
+        ></NoticeEditForm>
       </Dialog>
     </div>
   </AdminLayout>

@@ -31,11 +31,11 @@ const props = defineProps({
 //выбрасываемое событие
 const emit = defineEmits(['sendHoursRange'])
 
-const startHour = ref(props.start)
-
-const endHour = ref(props.end)
-
 const id = ref(props.id)
+
+const start = ref(props.start)
+
+const end = ref(props.end)
 
 //валидация начала и конца
 const errorOuter = ref({}) //выбрасываемая наружу ошибка
@@ -58,8 +58,8 @@ const startEndValidation = (id, start, end) => {
 //обновление значений переменных и отправка события с параметрами в родительский компонент
 const sendHoursRange = () => {
   const range = {
-    start: startHour.value,
-    end: endHour.value,
+    start: start.value,
+    end: end.value,
   }
 
   const err = errorOuter.value
@@ -68,7 +68,7 @@ const sendHoursRange = () => {
 }
 
 onMounted(() => {
-  startEndValidation('hoursPeriod_' + id.value, startHour.value, endHour.value)
+  startEndValidation('hoursPeriod_' + id.value, start.value, end.value)
 
   sendHoursRange()
 })
@@ -80,7 +80,7 @@ onMounted(() => {
       <p class="mb-1">{{ start_title }}</p>
 
       <Select
-        v-model="startHour"
+        v-model="start"
         :options="HOURS"
         placeholder="Выберите время"
         class="w-full"
@@ -88,7 +88,7 @@ onMounted(() => {
         :invalid="errorInner"
         @change="
           () => {
-            startEndValidation('HoursPeriod_' + id, startHour, endHour)
+            startEndValidation('HoursPeriod_' + id, start, end)
             sendHoursRange()
           }
         "
@@ -99,7 +99,7 @@ onMounted(() => {
       <p class="mb-1">{{ end_title }}</p>
 
       <Select
-        v-model="startHour"
+        v-model="end"
         :options="HOURS"
         placeholder="Выберите время"
         class="w-full"
@@ -107,7 +107,7 @@ onMounted(() => {
         :invalid="errorInner"
         @change="
           () => {
-            startEndValidation('HoursPeriod_' + id, startHour, endHour)
+            startEndValidation('HoursPeriod_' + id, start, end)
             sendHoursRange()
           }
         "
