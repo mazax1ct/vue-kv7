@@ -1,7 +1,5 @@
 <script setup>
-import { onMounted, ref } from 'vue'
-
-import axios from 'axios'
+import { onMounted, ref, computed } from 'vue'
 
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import TableDateSelect from '@/components/TableDateSelect.vue'
@@ -13,9 +11,16 @@ import { FilterMatchMode } from '@primevue/core/api'
 
 import moment from 'moment'
 
-import { DAYS, API_BASE_URL } from '@/constants'
+import { DAYS } from '@/constants'
 
-const marks = ref([]) //данные для таблицы
+import { useMarksStore } from '@/stores/marks'
+import { storeToRefs } from 'pinia'
+
+const marksStore = useMarksStore() //получаем доступ к стору
+
+const { isLoading, isLoaded, marks, error } = storeToRefs(marksStore) //деструктуризация данных из стора
+
+const { fetchMarks } = marksStore
 
 const dt = ref(null) //ссылка на таблицу
 
@@ -36,10 +41,6 @@ const filters = ref({
   defect: { value: null, matchMode: FilterMatchMode.EQUALS },
   late_out: { value: null, matchMode: FilterMatchMode.EQUALS },
 })
-
-const loading = ref(false) //отметка о загрузке
-
-const dataLoaded = ref(false) //отметка о том что данные получены
 
 //колонки
 const columns = ref([
@@ -63,10 +64,14 @@ const rangeStart = ref(new Date()) //начало периода выборки
 const rangeEnd = ref(new Date()) //конец периода выборки
 
 //функция обновления периода выборки
-function recieveDatesRange(range) {
+const recieveDatesRange = (range) => {
   rangeStart.value = range.start
   rangeEnd.value = range.end
-  getMarks()
+
+  fetchMarks(rangeStart.value, rangeEnd.value)
+  prepareFilters()
+
+  console.log(isLoaded.value)
 }
 
 //поля данных для экспорта
@@ -91,50 +96,34 @@ let json_fields = {
   Оповещение: 'notify',
 }
 
-//получение данных
-const getMarks = async () => {
-  loading.value = true
+const prepareFilters = () => {
+  if (isLoaded.value) {
+    console.log('d')
+    columns.value.forEach((col) => {
+      let uniqueValues = [...new Set(marks.value.map((obj) => obj[col.field]))] //собираем массив уникальных значений для фильтров
 
-  try {
-    const { data } = await axios.get(
-      `${API_BASE_URL}/marks?date_gte=${moment(
-        rangeStart.value,
-        'DD-MM-YYYY',
-      ).unix()}&date_lte=${moment(rangeEnd.value, 'DD-MM-YYYY').unix()}`,
-    ) //запрос данных с учётом периода TODO переделать на параметры
+      if (col.field === 'day') {
+        //сортировка значений для фильтров
+        uniqueValues.sort((a, b) => {
+          return DAYS.indexOf(a) - DAYS.indexOf(b)
+        })
+      } else {
+        uniqueValues.sort()
+      }
 
-    marks.value = data //обновляем переменную данных для таблицы
+      col.options = uniqueValues //запись значений для фильтров
+    })
 
-    if (marks.value.length > 0) {
-      columns.value.forEach((col) => {
-        let uniqueValues = [...new Set(marks.value.map((obj) => obj[col.field]))] //собираем массив уникальных значений для фильтров
+    //dataLoaded.value = true //отметка о том что данные получены
 
-        if (col.field === 'day') {
-          //сортировка значений для фильтров
-          uniqueValues.sort((a, b) => {
-            return DAYS.indexOf(a) - DAYS.indexOf(b)
-          })
-        } else {
-          uniqueValues.sort()
-        }
+    dtPageCount.value = Math.ceil(marks.value.length / dtRows.value) //считаем кол-во страниц с учётом кол-ва строк на странице
+  } else {
+    console.log('v')
+    columns.value.forEach((col) => {
+      col.options = []
+    })
 
-        col.options = uniqueValues //запись значений для фильтров
-      })
-
-      dataLoaded.value = true //отметка о том что данные получены
-
-      dtPageCount.value = Math.ceil(marks.value.length / dtRows.value) //считаем кол-во страниц с учётом кол-ва строк на странице
-    } else {
-      columns.value.forEach((col) => {
-        col.options = []
-      })
-
-      dataLoaded.value = false
-    }
-  } catch (error) {
-    console.error('Failed to fetch data:', error)
-  } finally {
-    loading.value = false
+    //dataLoaded.value = false
   }
 }
 
@@ -163,17 +152,20 @@ const exportFilteredData = () => {
 }
 
 //функция обновления отметки о загрузке данных при фильтрации
-const onFilter = (event) => {
+/*const onFilter = (event) => {
   if (event.filteredValue.length > 0) {
     dataLoaded.value = true
   } else {
     dataLoaded.value = false
   }
-}
+}*/
 
 //получаем данные на маунт приложения
 onMounted(async () => {
-  await getMarks()
+  fetchMarks(rangeStart.value, rangeEnd.value)
+  prepareFilters()
+
+  console.log(isLoaded.value)
 })
 </script>
 
@@ -183,7 +175,7 @@ onMounted(async () => {
       <TableDateSelect @sendDatesRange="recieveDatesRange" :start="rangeStart" :end="rangeEnd" />
 
       <download-excel
-        v-if="dataLoaded"
+        v-if="isLoaded"
         class="cursor-pointer py-2 px-3 text-sm border-emerald-700 border-solid border rounded-sm text-emerald-700 hover:bg-emerald-700 hover:text-white"
         :fields="json_fields"
         :fetch="exportFilteredData"
@@ -203,14 +195,14 @@ onMounted(async () => {
       filterDisplay="row"
       :value="marks"
       showGridlines
-      :loading="loading"
+      :loading="isLoading"
       paginator
       :rows="dtRows"
       :rowsPerPageOptions="[5, 10, 20, 50]"
       tableStyle="min-width: 50rem"
       @page="getPage($event)"
       @update:rows="getRows($event)"
-      @filter="onFilter"
+
     >
       <template #empty>
         <div class="text-center">По вашему запросу ничего не найдено</div>

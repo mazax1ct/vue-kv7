@@ -35,11 +35,11 @@ const noticeDefault = ref({
   end: '',
 })
 
-const loading = ref(false) //отметка о загрузке
+const isProcess = ref(false) //отметка о действии по кнопке
 
 const visible = ref(false) //отметка о видимости диалога
 
-const currentNoticeId = ref(0) //id увеломления
+const currentNoticeId = ref(0) //id уведомления
 
 const dialogHeader = ref('') //заголовок диалога
 
@@ -58,25 +58,10 @@ const updateNoticeDialogOnOpen = (id) => {
       start: '',
       end: '',
     }
-
-    console.log(currentNoticeId.value, noticeDefault.value)
   }
 
   visible.value = true
 }
-
-//отметка о валидности времени начала и конца проверки
-const errors = ref([])
-
-const validationErrors = computed(() => {
-  const errorExist = errors.value.find((errEl) => errEl.error === true)
-
-  if (errorExist) {
-    return true
-  } else {
-    return false
-  }
-})
 
 const recieveCloseDialog = () => {
   visible.value = !visible.value
@@ -120,7 +105,7 @@ onMounted(async () => {
           type="button"
           severity="info"
           label="Добавить уведомление"
-          :loading="loading"
+          :loading="isProcess"
           @click="updateNoticeDialogOnOpen()"
         />
       </div>
@@ -162,8 +147,8 @@ onMounted(async () => {
               severity="info"
               variant="outlined"
               label="Редактировать"
-              :loading="loading"
-              @click="(updateNoticeDialogOnOpen(slotProps.data.id), console.log(slotProps.data.id))"
+              :loading="isProcess"
+              @click="updateNoticeDialogOnOpen(slotProps.data.id)"
             />
           </template>
         </Column>
@@ -184,7 +169,7 @@ onMounted(async () => {
           @sendCreateNotice="recieveCreateNotice"
           @sendDeleteNotice="recieveDeleteNotice"
           :notice="currentNoticeId ? getNotice(currentNoticeId) : noticeDefault"
-        ></NoticeEditForm>
+        />
       </Dialog>
     </div>
   </AdminLayout>

@@ -20,7 +20,7 @@ const startDate = ref(props.start)
 
 const endDate = ref(props.end)
 
-function sendDatesRange() {
+const sendDatesRange = () => {
   const range = {
     start: startDate.value,
     end: endDate.value,

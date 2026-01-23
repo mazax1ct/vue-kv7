@@ -29,7 +29,7 @@ const props = defineProps({
 })
 
 //выбрасываемое событие
-const emit = defineEmits(['sendHoursRange'])
+const emit = defineEmits(['sendHoursRange', 'sendHoursRangeError'])
 
 const id = ref(props.id)
 
@@ -37,45 +37,44 @@ const start = ref(props.start)
 
 const end = ref(props.end)
 
-//валидация начала и конца
-const errorOuter = ref({}) //выбрасываемая наружу ошибка
+const isError = ref()
 
-const errorInner = ref() //внутренняя ошибка
-
-const startEndValidation = (id, start, end) => {
+const startEndValidation = (start, end) => {
   if (HOURS.indexOf(start) >= HOURS.indexOf(end)) {
-    errorInner.value = true
+    isError.value = true
   } else {
-    errorInner.value = false
-  }
-
-  errorOuter.value = {
-    id: id,
-    error: errorInner.value,
+    isError.value = false
   }
 }
 
-//обновление значений переменных и отправка события с параметрами в родительский компонент
+
 const sendHoursRange = () => {
   const range = {
     start: start.value,
     end: end.value,
   }
 
-  const err = errorOuter.value
+  emit('sendHoursRange', range)
+}
 
-  emit('sendHoursRange', range, err)
+const sendHoursRangeError = (id) => {
+  const error = {
+    id: id,
+    state: isError.value,
+  }
+
+  emit('sendHoursRangeError', error)
 }
 
 onMounted(() => {
-  startEndValidation('hoursPeriod_' + id.value, start.value, end.value)
-
+  startEndValidation(start.value, end.value)
   sendHoursRange()
+  sendHoursRangeError('hoursRange_' + id.value)
 })
 </script>
 
 <template>
-  <div :id="'HoursPeriod_' + id" class="flex flex-wrap gap-4">
+  <div :id="'hoursRange_' + id" class="flex flex-wrap gap-4">
     <div style="width: calc(100% / 2 - var(--spacing) * 4 / 2)">
       <p class="mb-1">{{ start_title }}</p>
 
@@ -85,11 +84,12 @@ onMounted(() => {
         placeholder="Выберите время"
         class="w-full"
         size="small"
-        :invalid="errorInner"
+        :invalid="isError"
         @change="
           () => {
-            startEndValidation('HoursPeriod_' + id, start, end)
-            sendHoursRange()
+            startEndValidation(start, end)
+            sendHoursRange(start, end)
+            sendHoursRangeError('hoursRange_' + id)
           }
         "
       />
@@ -104,11 +104,12 @@ onMounted(() => {
         placeholder="Выберите время"
         class="w-full"
         size="small"
-        :invalid="errorInner"
+        :invalid="isError"
         @change="
           () => {
-            startEndValidation('HoursPeriod_' + id, start, end)
-            sendHoursRange()
+            startEndValidation(start, end)
+            sendHoursRange(start, end)
+            sendHoursRangeError('hoursRange_' + id)
           }
         "
       />
@@ -116,7 +117,7 @@ onMounted(() => {
   </div>
 
   <div
-    v-if="errorInner"
+    v-if="isError"
     class="p-2 mb-4 mt-2 border-solid border rounded-sm bg-red-100 border-red-800 text-red-800"
   >
     {{ error_text }}

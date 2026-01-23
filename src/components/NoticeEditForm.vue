@@ -1,7 +1,7 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import Select from 'primevue/select'
-import HoursPeriod from '@/components/HoursPeriod.vue'
+import HoursRange from '@/components/HoursRange.vue'
 import Button from 'primevue/button'
 import ConfirmDialog from 'primevue/confirmdialog'
 import { useConfirm } from 'primevue/useconfirm'
@@ -30,6 +30,12 @@ const deleteConfirm = () => {
   })
 }
 
+const errors = ref([])
+
+const isDisabled = computed(() => {
+  return errors.value.some(item => item.state === true)
+})
+
 const sendCloseDialog = () => {
   emit('sendCloseDialog')
 }
@@ -46,18 +52,19 @@ const sendDeleteNotice = () => {
   emit('sendDeleteNotice', notice.id)
 }
 
-const recieveHoursRange = (range, err) => {
+const recieveHoursRange = (range) => {
   notice.value.start = range.start
   notice.value.end = range.end
+}
 
-  //пишем/обновляем ошибку в массиве ошибок
-  /*const error = errors.value.find((errEl) => errEl.id === err.id)
+const recieveHoursRangeError = (error) => {
+  const err = errors.value.find((el) => el.id === error.id)
 
-  if (!error) {
-    errors.value.push(err)
+  if (!err) {
+    errors.value.push(error)
   } else {
-    error.error = err.error
-  }*/
+    err.state = error.state
+  }
 }
 </script>
 
@@ -78,8 +85,9 @@ const recieveHoursRange = (range, err) => {
   <p class="mb-2 text-sm font-semibold">Время работы</p>
 
   <div class="mb-4">
-    <HoursPeriod
+    <HoursRange
       @sendHoursRange="recieveHoursRange"
+      @sendHoursRangeError="recieveHoursRangeError"
       :id="notice.id ? 'notice_' + Number(notice.id) : 'new_notice'"
       :start="notice.start"
       :end="notice.end"
@@ -134,6 +142,7 @@ const recieveHoursRange = (range, err) => {
       severity="success"
       label="Сохранить"
       :loading="loading"
+      :disabled="isDisabled"
       @click="notice.id ? sendUpdateNotice() : sendCreateNotice()"
     />
   </div>

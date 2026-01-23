@@ -59,7 +59,6 @@ export const useNoticesStore = defineStore('notices', () => {
       const ids = notices.value.map(item => item.id)
       const maxId = Math.max(...ids);
       newNoticeId = Number(maxId) + 1
-      console.log(newNoticeId)
     } else {
       newNoticeId = 1
     }
@@ -89,7 +88,7 @@ export const useNoticesStore = defineStore('notices', () => {
       await axios.delete(`${API_BASE_URL}/notices/${id}`)
 
       fetchNotices()
-      
+
       console.log('запись в сторе удалена')
     } catch (err) {
       error.value = err
