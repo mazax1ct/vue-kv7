@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref, computed } from 'vue'
+import { onMounted, ref } from 'vue'
 
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import DataTable from 'primevue/datatable'
@@ -67,24 +67,24 @@ const recieveCloseDialog = () => {
   visible.value = !visible.value
 }
 
-const recieveUpdateNotice = (notice) => {
-  updateNotice(notice)
+const recieveUpdateNotice = async(notice) => {
+  await updateNotice(notice)
 
   notification('info', 'Информация', 'Запись обновлена')
 
   visible.value = false
 }
 
-const recieveCreateNotice = (notice) => {
-  createNotice(notice)
+const recieveCreateNotice = async(notice) => {
+  await createNotice(notice)
 
   notification('success', 'Информация', 'Запись добавлена')
 
   visible.value = false
 }
 
-const recieveDeleteNotice = () => {
-  deleteNotice(currentNoticeId.value)
+const recieveDeleteNotice = async() => {
+  await deleteNotice(currentNoticeId.value)
 
   notification('error', 'Информация', 'Запись удалена')
 

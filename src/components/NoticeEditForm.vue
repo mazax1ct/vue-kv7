@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import Select from 'primevue/select'
 import HoursRange from '@/components/HoursRange.vue'
 import Button from 'primevue/button'
@@ -13,11 +13,16 @@ const props = defineProps({
   },
 })
 
-const notice = ref(props.notice)
+const localObject = ref({ ...props.notice }) //локальная копия входящего объекта чтобы реактивно не менялась таблица
 
 const loading = ref(false)
 
-const emit = defineEmits(['sendCloseDialog', 'sendUpdateNotice', 'sendCreateNotice', 'sendDeleteNotice'])
+const emit = defineEmits([
+  'sendCloseDialog',
+  'sendUpdateNotice',
+  'sendCreateNotice',
+  'sendDeleteNotice',
+])
 
 //попап подтверждения удаления записи
 const confirm = useConfirm()
@@ -33,7 +38,7 @@ const deleteConfirm = () => {
 const errors = ref([])
 
 const isDisabled = computed(() => {
-  return errors.value.some(item => item.state === true)
+  return errors.value.some((item) => item.state === true)
 })
 
 const sendCloseDialog = () => {
@@ -41,20 +46,20 @@ const sendCloseDialog = () => {
 }
 
 const sendUpdateNotice = () => {
-  emit('sendUpdateNotice', notice.value)
+  emit('sendUpdateNotice', localObject.value)
 }
 
 const sendCreateNotice = () => {
-  emit('sendCreateNotice', notice.value)
+  emit('sendCreateNotice', localObject.value)
 }
 
 const sendDeleteNotice = () => {
-  emit('sendDeleteNotice', notice.id)
+  emit('sendDeleteNotice', localObject.id)
 }
 
 const recieveHoursRange = (range) => {
-  notice.value.start = range.start
-  notice.value.end = range.end
+  localObject.value.start = range.start
+  localObject.value.end = range.end
 }
 
 const recieveHoursRangeError = (error) => {
@@ -66,20 +71,29 @@ const recieveHoursRangeError = (error) => {
     err.state = error.state
   }
 }
+
+//вотчер за изменением пропсов из изменение локальной копии объекта
+watch(
+  () => props.notice,
+  (newObject) => {
+    localObject.value = { ...newObject }
+  },
+  { deep: true },
+)
 </script>
 
 <template>
   <p class="mb-2 text-sm font-semibold">Часовой пояс</p>
 
   <Select
-    v-model="notice.timezone"
+    v-model="localObject.timezone"
     :options="TIMEZONES"
     optionLabel="value"
     optionValue="key"
     placeholder="Выберите часовой пояс"
     class="w-full mb-4"
     size="small"
-    :invalid="!notice.timezone"
+    :invalid="!localObject.timezone"
   />
 
   <p class="mb-2 text-sm font-semibold">Время работы</p>
@@ -88,9 +102,9 @@ const recieveHoursRangeError = (error) => {
     <HoursRange
       @sendHoursRange="recieveHoursRange"
       @sendHoursRangeError="recieveHoursRangeError"
-      :id="notice.id ? 'notice_' + Number(notice.id) : 'new_notice'"
-      :start="notice.start"
-      :end="notice.end"
+      :id="localObject.id ? 'notice_' + Number(localObject.id) : 'new_notice'"
+      :start="localObject.start"
+      :end="localObject.end"
       start_title="Начало проверки"
       end_title="Конец проверки"
       error_text="Ошибка! Время начала и конца проверки не может быть пустым, а так же время начала проверки не может быть равно или больше времени конца проверки!"
@@ -121,7 +135,7 @@ const recieveHoursRangeError = (error) => {
     </ConfirmDialog>
 
     <Button
-      v-if="notice.id"
+      v-if="localObject.id"
       type="button"
       severity="danger"
       label="Удалить"
@@ -137,13 +151,13 @@ const recieveHoursRangeError = (error) => {
     />
 
     <Button
-      v-if="notice.start && notice.end && notice.timezone"
+      v-if="localObject.start && localObject.end && localObject.timezone"
       type="button"
       severity="success"
       label="Сохранить"
       :loading="loading"
       :disabled="isDisabled"
-      @click="notice.id ? sendUpdateNotice() : sendCreateNotice()"
+      @click="localObject.id ? sendUpdateNotice() : sendCreateNotice()"
     />
   </div>
 </template>

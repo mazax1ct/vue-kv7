@@ -11,8 +11,6 @@ import { FilterMatchMode } from '@primevue/core/api'
 
 import moment from 'moment'
 
-import { DAYS } from '@/constants'
-
 import { useMarksStore } from '@/stores/marks'
 import { storeToRefs } from 'pinia'
 
@@ -20,15 +18,13 @@ const marksStore = useMarksStore() //получаем доступ к стору
 
 const { isLoading, isLoaded, marks, error } = storeToRefs(marksStore) //деструктуризация данных из стора
 
-const { fetchMarks } = marksStore
+const { fetchMarks, prepareFilters } = marksStore
 
 const dt = ref(null) //ссылка на таблицу
 
 const dtPage = ref(1) //стартовая страница
 
 const dtRows = ref(5) //стартовое кол-во строк таблицы
-
-const dtPageCount = ref(0) //кол-во страниц до появления данных
 
 //фильтры по колонкам
 const filters = ref({
@@ -64,14 +60,12 @@ const rangeStart = ref(new Date()) //начало периода выборки
 const rangeEnd = ref(new Date()) //конец периода выборки
 
 //функция обновления периода выборки
-const recieveDatesRange = (range) => {
+const recieveDatesRange = async (range) => {
   rangeStart.value = range.start
   rangeEnd.value = range.end
 
-  fetchMarks(rangeStart.value, rangeEnd.value)
-  prepareFilters()
-
-  console.log(isLoaded.value)
+  await fetchMarks(rangeStart.value, rangeEnd.value)
+  prepareFilters(columns.value)
 }
 
 //поля данных для экспорта
@@ -94,37 +88,6 @@ let json_fields = {
   Недоработка: 'defect',
   'Ранний уход': 'late_out',
   Оповещение: 'notify',
-}
-
-const prepareFilters = () => {
-  if (isLoaded.value) {
-    console.log('d')
-    columns.value.forEach((col) => {
-      let uniqueValues = [...new Set(marks.value.map((obj) => obj[col.field]))] //собираем массив уникальных значений для фильтров
-
-      if (col.field === 'day') {
-        //сортировка значений для фильтров
-        uniqueValues.sort((a, b) => {
-          return DAYS.indexOf(a) - DAYS.indexOf(b)
-        })
-      } else {
-        uniqueValues.sort()
-      }
-
-      col.options = uniqueValues //запись значений для фильтров
-    })
-
-    //dataLoaded.value = true //отметка о том что данные получены
-
-    dtPageCount.value = Math.ceil(marks.value.length / dtRows.value) //считаем кол-во страниц с учётом кол-ва строк на странице
-  } else {
-    console.log('v')
-    columns.value.forEach((col) => {
-      col.options = []
-    })
-
-    //dataLoaded.value = false
-  }
 }
 
 //функция получения текущей страницы
@@ -151,21 +114,10 @@ const exportFilteredData = () => {
   }
 }
 
-//функция обновления отметки о загрузке данных при фильтрации
-/*const onFilter = (event) => {
-  if (event.filteredValue.length > 0) {
-    dataLoaded.value = true
-  } else {
-    dataLoaded.value = false
-  }
-}*/
-
 //получаем данные на маунт приложения
 onMounted(async () => {
-  fetchMarks(rangeStart.value, rangeEnd.value)
-  prepareFilters()
-
-  console.log(isLoaded.value)
+  await fetchMarks(rangeStart.value, rangeEnd.value)
+  prepareFilters(columns.value)
 })
 </script>
 
@@ -202,7 +154,6 @@ onMounted(async () => {
       tableStyle="min-width: 50rem"
       @page="getPage($event)"
       @update:rows="getRows($event)"
-
     >
       <template #empty>
         <div class="text-center">По вашему запросу ничего не найдено</div>
