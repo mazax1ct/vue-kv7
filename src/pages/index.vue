@@ -9,6 +9,8 @@ import Column from 'primevue/column'
 import Select from 'primevue/select'
 import { FilterMatchMode } from '@primevue/core/api'
 
+import { DAYS } from '@/constants'
+
 import moment from 'moment'
 
 import { useMarksStore } from '@/stores/marks'
@@ -18,7 +20,7 @@ const marksStore = useMarksStore() //получаем доступ к стору
 
 const { isLoading, isLoaded, marks, error } = storeToRefs(marksStore) //деструктуризация данных из стора
 
-const { fetchMarks, prepareFilters } = marksStore
+const { fetchMarks } = marksStore
 
 const dt = ref(null) //ссылка на таблицу
 
@@ -55,6 +57,29 @@ const columns = ref([
   { field: 'notify', header: 'Оповещение' },
 ])
 
+const prepareFilters = () => {
+    if (isLoaded) {
+      columns.value.forEach((col) => {
+        let uniqueValues = [...new Set(marks.value.map((obj) => obj[col.field]))] //собираем массив уникальных значений для фильтров
+
+        //сортировка значений для фильтров
+        if (col.field === 'day') {
+          uniqueValues.sort((a, b) => {
+            return DAYS.indexOf(a) - DAYS.indexOf(b)
+          })
+        } else {
+          uniqueValues.sort()
+        }
+
+        col.options = uniqueValues //запись значений для фильтров
+      })
+    } else {
+      columns.value.forEach((col) => {
+        col.options = []
+      })
+    }
+  }
+
 const rangeStart = ref(new Date()) //начало периода выборки
 
 const rangeEnd = ref(new Date()) //конец периода выборки
@@ -65,7 +90,7 @@ const recieveDatesRange = async (range) => {
   rangeEnd.value = range.end
 
   await fetchMarks(rangeStart.value, rangeEnd.value)
-  prepareFilters(columns.value)
+  prepareFilters()
 }
 
 //поля данных для экспорта
@@ -117,7 +142,7 @@ const exportFilteredData = () => {
 //получаем данные на маунт приложения
 onMounted(async () => {
   await fetchMarks(rangeStart.value, rangeEnd.value)
-  prepareFilters(columns.value)
+  prepareFilters()
 })
 </script>
 
