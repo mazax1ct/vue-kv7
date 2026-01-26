@@ -4,13 +4,14 @@ import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 
 import App from './App.vue'
-import router from './router/router'
+import router from './router/router.ts'
 
 import PrimeVue from 'primevue/config'
 import Aura from '@primeuix/themes/aura'
 import ConfirmationService from 'primevue/confirmationservice'
 import ToastService from 'primevue/toastservice'
 
+// @ts-ignore
 import JsonExcel from "vue-json-excel3"
 
 const app = createApp(App)

@@ -13,7 +13,7 @@ import Dialog from 'primevue/dialog'
 import InputText from 'primevue/inputtext'
 import Select from 'primevue/select'
 import Checkbox from 'primevue/checkbox'
-import HoursPeriod from '@/components/HoursPeriod.vue'
+import HoursPeriod from '@/components/HoursRange.vue'
 import { API_BASE_URL, DAYS_NUM_NAMES, TIMEZONES, DAYS } from '@/constants'
 
 const depts = ref([]) //департаменты
