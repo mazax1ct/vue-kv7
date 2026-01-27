@@ -1,5 +1,5 @@
-<script setup>
-import { onMounted, ref, computed } from 'vue'
+<script setup lang="ts">
+import { onMounted, ref } from 'vue'
 
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import TableDateSelect from '@/components/TableDateSelect.vue'
@@ -10,6 +10,8 @@ import Select from 'primevue/select'
 import { FilterMatchMode } from '@primevue/core/api'
 
 import { DAYS } from '@/constants'
+
+import type { FilterColumn, Mark } from '@/types/types'
 
 import moment from 'moment'
 
@@ -22,11 +24,11 @@ const { isLoading, isLoaded, marks, error } = storeToRefs(marksStore) //дест
 
 const { fetchMarks } = marksStore
 
-const dt = ref(null) //ссылка на таблицу
+const datatable = ref(); //ссылка на таблицу
 
-const dtPage = ref(1) //стартовая страница
+const dtPage = ref<number>(1) //стартовая страница
 
-const dtRows = ref(5) //стартовое кол-во строк таблицы
+const dtRows = ref<number>(5) //стартовое кол-во строк таблицы
 
 //фильтры по колонкам
 const filters = ref({
@@ -41,51 +43,51 @@ const filters = ref({
 })
 
 //колонки
-const columns = ref([
+const columns = ref<FilterColumn[]>([
   { field: 'date', header: 'Дата' },
-  { field: 'day', header: 'День недели', filter: true },
-  { field: 'location', header: 'Местоположение', filter: true },
-  { field: 'name', header: 'ФИО', filter: true },
-  { field: 'position', header: 'Должность', filter: true },
-  { field: 'graphic', header: 'Часы по графику', filter: true },
+  { field: 'day', header: 'День недели', filter: true, options: [] },
+  { field: 'location', header: 'Местоположение', filter: true, options: [] },
+  { field: 'name', header: 'ФИО', filter: true, options: [] },
+  { field: 'position', header: 'Должность', filter: true, options: [] },
+  { field: 'graphic', header: 'Часы по графику', filter: true, options: [] },
   { field: 'fact', header: 'Часы факт' },
   { field: 'in', header: 'Приход' },
   { field: 'out', header: 'Уход' },
-  { field: 'late', header: 'Опоздание', filter: true },
-  { field: 'defect', header: 'Недоработка', filter: true },
-  { field: 'late_out', header: 'Ранний уход', filter: true },
+  { field: 'late', header: 'Опоздание', filter: true, options: [] },
+  { field: 'defect', header: 'Недоработка', filter: true, options: [] },
+  { field: 'late_out', header: 'Ранний уход', filter: true, options: [] },
   { field: 'notify', header: 'Оповещение' },
 ])
 
 const prepareFilters = () => {
-    if (isLoaded) {
-      columns.value.forEach((col) => {
-        let uniqueValues = [...new Set(marks.value.map((obj) => obj[col.field]))] //собираем массив уникальных значений для фильтров
+  if (isLoaded) {
+    columns.value.forEach((col) => {
+      const uniqueValues = [...new Set(marks.value.map((obj: Mark) => obj[col.field as keyof Mark]))] //собираем массив уникальных значений для фильтров
 
-        //сортировка значений для фильтров
-        if (col.field === 'day') {
-          uniqueValues.sort((a, b) => {
-            return DAYS.indexOf(a) - DAYS.indexOf(b)
-          })
-        } else {
-          uniqueValues.sort()
-        }
+      //сортировка значений для фильтров
+      if (col.field === 'day') {
+        uniqueValues.sort((a, b) => {
+          return DAYS.indexOf(a as string) - DAYS.indexOf(b as string)
+        })
+      } else {
+        uniqueValues.sort()
+      }
 
-        col.options = uniqueValues //запись значений для фильтров
-      })
-    } else {
-      columns.value.forEach((col) => {
-        col.options = []
-      })
-    }
+      col.options = uniqueValues as [] //запись значений для фильтров
+    })
+  } else {
+    columns.value.forEach((col) => {
+      col.options = []
+    })
   }
+}
 
 const rangeStart = ref(new Date()) //начало периода выборки
 
 const rangeEnd = ref(new Date()) //конец периода выборки
 
 //функция обновления периода выборки
-const recieveDatesRange = async (range) => {
+const recieveDatesRange = async (range: { start: Date; end: Date }) => {
   rangeStart.value = range.start
   rangeEnd.value = range.end
 
@@ -94,10 +96,10 @@ const recieveDatesRange = async (range) => {
 }
 
 //поля данных для экспорта
-let json_fields = {
+const json_fields = {
   Дата: {
     field: 'date',
-    callback: (value) => {
+    callback: (value: number) => {
       return `${moment.unix(value).format('DD.MM.YYYY')}`
     },
   },
@@ -116,18 +118,18 @@ let json_fields = {
 }
 
 //функция получения текущей страницы
-const getPage = (event) => {
+const getPage = (event: { page: number }) => {
   dtPage.value = event.page + 1
 }
 
 //функция получения кол-ва строк на странице
-const getRows = (event) => {
+const getRows = (event: number) => {
   dtRows.value = event
 }
 
 //подготовка массива данных для экспорта в excel с учетом постранички
 const exportFilteredData = () => {
-  const displayedData = dt.value.processedData
+  const displayedData = datatable.value.processedData
 
   if (displayedData.length <= dtRows.value) {
     return displayedData.slice(0, displayedData.length)
@@ -165,7 +167,7 @@ onMounted(async () => {
     </div>
 
     <DataTable
-      ref="dt"
+      ref="datatable"
       responsiveLayout="scroll"
       dataKey="id"
       v-model:filters="filters"

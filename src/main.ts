@@ -11,7 +11,7 @@ import Aura from '@primeuix/themes/aura'
 import ConfirmationService from 'primevue/confirmationservice'
 import ToastService from 'primevue/toastservice'
 
-// @ts-ignore
+// @ts-expect-error потому что пошёл он нахуй вот почему
 import JsonExcel from "vue-json-excel3"
 
 const app = createApp(App)

@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { onMounted, ref } from 'vue'
 
 import AdminLayout from '@/layouts/AdminLayout.vue'
@@ -12,6 +12,8 @@ import { useToast } from 'primevue/usetoast'
 
 import { TIMEZONES } from '@/constants'
 
+import type { Notice } from '@/types/types'
+
 import { useNoticesStore } from '@/stores/notices'
 import { storeToRefs } from 'pinia'
 
@@ -24,34 +26,34 @@ const { fetchNotices, getNotice, updateNotice, createNotice, deleteNotice } = no
 //уведомление об обновлении данных
 const toast = useToast()
 
-const notification = (severity, summary, detail) => {
+const notification = (severity: string, summary: string, detail: string) => {
   toast.add({ severity: severity, summary: summary, detail: detail, life: 3000 })
 }
 
-const noticeDefault = ref({
+const noticeDefault = ref<Notice>({
   id: '',
   timezone: '',
   start: '',
   end: '',
 })
 
-const isProcess = ref(false) //отметка о действии по кнопке
+const isProcess = ref<boolean>(false) //отметка о действии по кнопке
 
-const visible = ref(false) //отметка о видимости диалога
+const visible = ref<boolean>(false) //отметка о видимости диалога
 
-const currentNoticeId = ref(0) //id уведомления
+const currentNoticeId = ref<string>('') //id уведомления
 
-const dialogHeader = ref('') //заголовок диалога
+const dialogHeader = ref<string>('') //заголовок диалога
 
 //функция обновления данных в попапе
-const updateNoticeDialogOnOpen = (id) => {
+const updateNoticeDialogOnOpen = (id?: string) => {
   if (id) {
     dialogHeader.value = 'Редактирование'
 
     currentNoticeId.value = id
   } else {
     dialogHeader.value = 'Создание записи'
-    currentNoticeId.value = null
+    currentNoticeId.value = ''
     noticeDefault.value = {
       id: '',
       timezone: '',
@@ -67,7 +69,7 @@ const recieveCloseDialog = () => {
   visible.value = !visible.value
 }
 
-const recieveUpdateNotice = async(notice) => {
+const recieveUpdateNotice = async(notice: Notice) => {
   await updateNotice(notice)
 
   notification('info', 'Информация', 'Запись обновлена')
@@ -75,7 +77,7 @@ const recieveUpdateNotice = async(notice) => {
   visible.value = false
 }
 
-const recieveCreateNotice = async(notice) => {
+const recieveCreateNotice = async(notice: Notice) => {
   await createNotice(notice)
 
   notification('success', 'Информация', 'Запись добавлена')
@@ -132,7 +134,7 @@ onMounted(async () => {
 
         <Column field="timezone" header="Часовой пояс">
           <template #body="slotProps">
-            {{ TIMEZONES.find((timezone) => timezone.key === slotProps.data.timezone).value }}
+            {{ TIMEZONES.find((timezone) => timezone.key === slotProps.data.timezone)?.value }}
           </template>
         </Column>
 

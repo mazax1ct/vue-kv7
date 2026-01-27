@@ -1,15 +1,16 @@
 import { ref, computed } from 'vue'
 import axios from 'axios'
 import moment from 'moment'
-import { API_BASE_URL } from '@/constants'
+import { API_BASE_URL } from '@/constants.ts'
 import { defineStore } from 'pinia'
+import type {Mark} from '@/types/types'
 
 export const useMarksStore = defineStore('marks', () => {
-  const marks = ref([])
-  const isLoading = ref(false)
-  const error = ref(null)
+  const marks = ref<Mark[]>([])
+  const isLoading = ref<boolean>(false)
+  const error = ref<Error | undefined>()
 
-  async function fetchMarks(startDate, endDate) {
+  async function fetchMarks(startDate: Date, endDate: Date) {
     isLoading.value = true
 
     try {
@@ -21,14 +22,18 @@ export const useMarksStore = defineStore('marks', () => {
 
       console.log('данные в сторе загружены')
     } catch (err) {
-      error.value = err
+      if (err instanceof Error) {
+        error.value = err
+      } else {
+        error.value = new Error('Unknown error')
+      }
       console.error('Failed to fetch data:', err)
     } finally {
       isLoading.value = false
     }
   }
 
-  const isLoaded = computed(() => {
+  const isLoaded = computed((): boolean => {
     return marks.value.length > 0
   })
 
@@ -37,6 +42,6 @@ export const useMarksStore = defineStore('marks', () => {
     isLoading,
     isLoaded,
     error,
-    fetchMarks
+    fetchMarks,
   }
 })

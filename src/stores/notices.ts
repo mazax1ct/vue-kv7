@@ -2,15 +2,15 @@ import { ref } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '@/constants'
 import { defineStore } from 'pinia'
+import type { Notice } from '@/types/types'
 
 export const useNoticesStore = defineStore('notices', () => {
-  const notices = ref([])
-  const isLoading = ref(false)
-  const error = ref(null)
+  const notices = ref<Notice[]>([])
+  const isLoading = ref<boolean>(false)
+  const error = ref<Error | undefined>()
 
   async function fetchNotices() {
     isLoading.value = true
-    error.value = null
 
     try {
       const { data } = await axios.get(`${API_BASE_URL}/notices`)
@@ -19,20 +19,23 @@ export const useNoticesStore = defineStore('notices', () => {
 
       console.log('данные в сторе получены')
     } catch (err) {
-      error.value = err
+      if (err instanceof Error) {
+        error.value = err
+      } else {
+        error.value = new Error('Unknown error')
+      }
       console.error('Failed to fetch data:', err)
     } finally {
       isLoading.value = false
     }
   }
 
-  function getNotice(id) {
-    return notices.value.find((noticeItem) => Number(noticeItem.id) === Number(id))
+  function getNotice(id: string) {
+    return notices.value.find((noticeItem: Notice) => Number(noticeItem.id) === Number(id))
   }
 
-  async function updateNotice(noticeObj) {
+  async function updateNotice(noticeObj: Notice) {
     isLoading.value = true
-    error.value = null
 
     try {
       await axios.patch(`${API_BASE_URL}/notices/${noticeObj.id}`, noticeObj)
@@ -41,29 +44,32 @@ export const useNoticesStore = defineStore('notices', () => {
 
       console.log('запись в сторе обновлена')
     } catch (err) {
-      error.value = err
+      if (err instanceof Error) {
+        error.value = err
+      } else {
+        error.value = new Error('Unknown error')
+      }
       console.error('Failed to fetch data:', err)
     } finally {
       isLoading.value = false
     }
   }
 
-  async function createNotice(noticeObj) {
+  async function createNotice(noticeObj: Notice) {
     isLoading.value = true
-    error.value = null
 
     /*TODO: УБРАТЬ ФОРМИРОВАНИЕ ID, ПЕРЕНЕСТИ НА BACK*/
-    let newNoticeId = 0
+    let newNoticeId: string = ''
 
     if (notices.value.length > 0) {
-      const ids = notices.value.map(item => item.id)
-      const maxId = Math.max(...ids);
-      newNoticeId = Number(maxId) + 1
+      const ids = notices.value.map(item => Number(item.id))
+      const maxId = Math.max(...ids)
+      newNoticeId = String(Number(maxId) + 1)
     } else {
-      newNoticeId = 1
+      newNoticeId = '1'
     }
 
-    noticeObj.id = Number(newNoticeId)
+    noticeObj.id = newNoticeId
     /*TODO: УБРАТЬ ФОРМИРОВАНИЕ ID, ПЕРЕНЕСТИ НА BACK*/
 
     try {
@@ -73,16 +79,19 @@ export const useNoticesStore = defineStore('notices', () => {
 
       console.log('запись в сторе создана')
     } catch (err) {
-      error.value = err
+      if (err instanceof Error) {
+        error.value = err
+      } else {
+        error.value = new Error('Unknown error')
+      }
       console.error('Failed to fetch data:', err)
     } finally {
       isLoading.value = false
     }
   }
 
-  async function deleteNotice(id) {
+  async function deleteNotice(id: string) {
     isLoading.value = true
-    error.value = null
 
     try {
       await axios.delete(`${API_BASE_URL}/notices/${id}`)
@@ -91,7 +100,11 @@ export const useNoticesStore = defineStore('notices', () => {
 
       console.log('запись в сторе удалена')
     } catch (err) {
-      error.value = err
+      if (err instanceof Error) {
+        error.value = err
+      } else {
+        error.value = new Error('Unknown error')
+      }
       console.error('Failed to fetch data:', err)
     } finally {
       isLoading.value = false

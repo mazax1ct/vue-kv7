@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import DatePicker from 'primevue/datepicker';
 
@@ -16,9 +16,9 @@ const props = defineProps({
 
 const emit = defineEmits(['sendDatesRange'])
 
-const startDate = ref(props.start)
+const startDate = ref<Date>(props.start)
 
-const endDate = ref(props.end)
+const endDate = ref<Date>(props.end)
 
 const sendDatesRange = () => {
   const range = {
