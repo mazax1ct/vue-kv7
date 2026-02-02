@@ -159,7 +159,6 @@ watch(
       binary
       inputId="all_week"
       name="all_week"
-      value="all_week"
     />
     <label for="all_week">Вся неделя</label>
   </div>
@@ -190,7 +189,6 @@ watch(
             binary
             :inputId="'day_' + day.day_num"
             :name="'day_' + day.day_num"
-            :value="'day_' + day.day_num"
           />
           <label :for="'day_' + day.day_num">Выходной</label>
         </div>
@@ -216,7 +214,6 @@ watch(
       binary
       inputId="worker_worktime_like_unit"
       name="worker_worktime_like_unit"
-      value=""
     />
     <label for="worker_worktime_like_unit">Как в подразделении</label>
   </div>
@@ -224,10 +221,9 @@ watch(
   <div v-if="props.worktimeItem.type === 'dept'" class="flex items-center gap-2 mb-4">
     <Checkbox
       v-model="localObject.dept_set_to_all"
-      :binary="true"
+      binary
       inputId="dept_set_to_all"
       name="dept_set_to_all"
-      value=""
     />
     <label for="dept_set_to_all"
       >Установить такие же часы работы для ВСЕХ сотрудников подразделения</label
