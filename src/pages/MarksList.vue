@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, computed } from 'vue'
 
 import AdminLayout from '@/layouts/AdminLayout.vue'
 import TableDateSelect from '@/components/TableDateSelect.vue'
@@ -82,16 +82,24 @@ const prepareFilters = () => {
   }
 }
 
-const rangeStart = ref(new Date()) //начало периода выборки
+const rangeStart = ref<Date>(new Date()) //начало периода выборки
 
-const rangeEnd = ref(new Date()) //конец периода выборки
+const rangeEnd = ref<Date>(new Date()) //конец периода выборки
+
+//параметры для запроса данных (к концу периода добавляем 1 день)
+const fetchMarksParams = computed(() => {
+  return {
+    date_gte: moment(rangeStart.value, 'DD-MM-YYYY').unix(),
+    date_lte: moment(rangeEnd.value, 'DD-MM-YYYY').add(1, 'days').unix()
+  }
+})
 
 //функция обновления периода выборки
 const recieveDatesRange = async (range: { start: Date; end: Date }) => {
   rangeStart.value = range.start
   rangeEnd.value = range.end
 
-  await fetchMarks(rangeStart.value, rangeEnd.value)
+  await fetchMarks(fetchMarksParams.value)
   prepareFilters()
 }
 
@@ -143,7 +151,7 @@ const exportFilteredData = () => {
 
 //получаем данные на маунт приложения
 onMounted(async () => {
-  await fetchMarks(rangeStart.value, rangeEnd.value)
+  await fetchMarks(fetchMarksParams.value)
   prepareFilters()
 })
 </script>

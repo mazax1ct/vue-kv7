@@ -1,21 +1,23 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import Select from 'primevue/select'
-import HoursRange from '@/components/HoursRange.vue'
+import HoursRangePicker from '@/components/HoursRangePicker.vue'
 import Button from 'primevue/button'
 import ConfirmDialog from 'primevue/confirmdialog'
 import { useConfirm } from 'primevue/useconfirm'
 import { TIMEZONES } from '@/constants'
+import type { Notice, HoursRange, HoursRangeError } from '@/types/types'
 
-const props = defineProps({
-  notice: {
-    type: Object,
-  },
+const props = defineProps<{
+  noticeItem: Notice
+}>()
+
+//локальная копия входящего объекта чтобы реактивно не менялась таблица
+const localObject = ref<Notice>({
+  ...props.noticeItem,
 })
 
-const localObject = ref({ ...props.notice }) //локальная копия входящего объекта чтобы реактивно не менялась таблица
-
-const loading = ref(false)
+const loading = ref<boolean>(false)
 
 const emit = defineEmits([
   'sendCloseDialog',
@@ -35,7 +37,7 @@ const deleteConfirm = () => {
   })
 }
 
-const errors = ref([])
+const errors = ref<HoursRangeError[]>([])
 
 const isDisabled = computed(() => {
   return errors.value.some((item) => item.state === true)
@@ -54,15 +56,15 @@ const sendCreateNotice = () => {
 }
 
 const sendDeleteNotice = () => {
-  emit('sendDeleteNotice', localObject.id)
+  emit('sendDeleteNotice', localObject.value)
 }
 
-const recieveHoursRange = (range) => {
+const recieveHoursRange = (range: HoursRange) => {
   localObject.value.start = range.start
   localObject.value.end = range.end
 }
 
-const recieveHoursRangeError = (error) => {
+const recieveHoursRangeError = (error: HoursRangeError) => {
   const err = errors.value.find((el) => el.id === error.id)
 
   if (!err) {
@@ -74,8 +76,8 @@ const recieveHoursRangeError = (error) => {
 
 //вотчер за изменением пропсов из изменение локальной копии объекта
 watch(
-  () => props.notice,
-  (newObject) => {
+  () => props.noticeItem,
+  (newObject: Notice) => {
     localObject.value = { ...newObject }
   },
   { deep: true },
@@ -99,10 +101,10 @@ watch(
   <p class="mb-2 text-sm font-semibold">Время работы</p>
 
   <div class="mb-4">
-    <HoursRange
+    <HoursRangePicker
       @sendHoursRange="recieveHoursRange"
       @sendHoursRangeError="recieveHoursRangeError"
-      :id="localObject.id ? 'notice_' + Number(localObject.id) : 'new_notice'"
+      :id="localObject.id ? 'notice_' + localObject.id : 'new_notice'"
       :start="localObject.start"
       :end="localObject.end"
       start_title="Начало проверки"
@@ -113,7 +115,7 @@ watch(
 
   <div class="flex flex-wrap gap-2">
     <ConfirmDialog group="headless">
-      <template #container="{ message, acceptCallback, rejectCallback }">
+      <template #container="{ message, rejectCallback }">
         <div class="flex flex-col items-center p-8 bg-surface-0 dark:bg-surface-900 rounded">
           <h5 class="font-bold text-2xl block mb-2">{{ message.header }}</h5>
 
@@ -121,11 +123,12 @@ watch(
 
           <div class="flex items-center gap-2 mt-6">
             <Button
+              v-if="noticeItem.id"
               type="button"
               severity="danger"
               label="Удалить"
               :loading="loading"
-              @click="sendDeleteNotice(notice.id)"
+              @click="sendDeleteNotice()"
             />
 
             <Button type="button" severity="contrast" label="Отмена" @click="rejectCallback" />

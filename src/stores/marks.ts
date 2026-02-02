@@ -1,6 +1,5 @@
 import { ref, computed } from 'vue'
 import axios from 'axios'
-import moment from 'moment'
 import { API_BASE_URL } from '@/constants.ts'
 import { defineStore } from 'pinia'
 import type {Mark} from '@/types/types'
@@ -8,14 +7,17 @@ import type {Mark} from '@/types/types'
 export const useMarksStore = defineStore('marks', () => {
   const marks = ref<Mark[]>([])
   const isLoading = ref<boolean>(false)
-  const error = ref<Error | undefined>()
+  const error = ref<Error | null>(null)
 
-  async function fetchMarks(startDate: Date, endDate: Date) {
+  async function fetchMarks(params: object) {
     isLoading.value = true
+    error.value = null
 
     try {
       const { data } = await axios.get(
-        `${API_BASE_URL}/marks?date_gte=${moment(startDate, 'DD-MM-YYYY').unix()}&date_lte=${moment(endDate, 'DD-MM-YYYY').unix()}`,
+        `${API_BASE_URL}/marks`, {
+          params
+        }
       )
 
       marks.value = data

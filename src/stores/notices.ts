@@ -7,10 +7,11 @@ import type { Notice } from '@/types/types'
 export const useNoticesStore = defineStore('notices', () => {
   const notices = ref<Notice[]>([])
   const isLoading = ref<boolean>(false)
-  const error = ref<Error | undefined>()
+  const error = ref<Error | null>(null)
 
   async function fetchNotices() {
     isLoading.value = true
+    error.value = null
 
     try {
       const { data } = await axios.get(`${API_BASE_URL}/notices`)
@@ -30,12 +31,9 @@ export const useNoticesStore = defineStore('notices', () => {
     }
   }
 
-  function getNotice(id: string) {
-    return notices.value.find((noticeItem: Notice) => Number(noticeItem.id) === Number(id))
-  }
-
   async function updateNotice(noticeObj: Notice) {
     isLoading.value = true
+    error.value = null
 
     try {
       await axios.patch(`${API_BASE_URL}/notices/${noticeObj.id}`, noticeObj)
@@ -57,6 +55,7 @@ export const useNoticesStore = defineStore('notices', () => {
 
   async function createNotice(noticeObj: Notice) {
     isLoading.value = true
+    error.value = null
 
     /*TODO: УБРАТЬ ФОРМИРОВАНИЕ ID, ПЕРЕНЕСТИ НА BACK*/
     let newNoticeId: string = ''
@@ -92,6 +91,7 @@ export const useNoticesStore = defineStore('notices', () => {
 
   async function deleteNotice(id: string) {
     isLoading.value = true
+    error.value = null
 
     try {
       await axios.delete(`${API_BASE_URL}/notices/${id}`)
@@ -116,7 +116,6 @@ export const useNoticesStore = defineStore('notices', () => {
     isLoading,
     error,
     fetchNotices,
-    getNotice,
     updateNotice,
     createNotice,
     deleteNotice,

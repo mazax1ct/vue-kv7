@@ -1,18 +1,11 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import DatePicker from 'primevue/datepicker';
+import DatePicker from 'primevue/datepicker'
 
-const props = defineProps({
-  start: {
-    type: Date,
-    required: true,
-  },
-
-  end: {
-    type: Date,
-    required: true,
-  },
-})
+const props = defineProps<{
+  start: Date
+  end: Date
+}>()
 
 const emit = defineEmits(['sendDatesRange'])
 
@@ -35,13 +28,27 @@ const sendDatesRange = () => {
     <div class="form-group flex items-center gap-2">
       <label for="startDate" class="text-nowrap" style="min-width: 95px">Дата начала:</label>
 
-      <DatePicker v-model="startDate" showIcon iconDisplay="input" :maxDate="endDate" :manualInput="false" @update:modelValue="sendDatesRange"/>
+      <DatePicker
+        v-model="startDate"
+        showIcon
+        iconDisplay="input"
+        :maxDate="endDate"
+        :manualInput="false"
+        @update:modelValue="sendDatesRange"
+      />
     </div>
 
     <div class="form-group flex items-center gap-2">
       <label for="endDate" class="text-nowrap" style="min-width: 95px">Дата окончания:</label>
 
-      <DatePicker v-model="endDate" showIcon iconDisplay="input" :minDate="startDate" :manualInput="false" @update:modelValue="sendDatesRange" />
+      <DatePicker
+        v-model="endDate"
+        showIcon
+        iconDisplay="input"
+        :minDate="startDate"
+        :manualInput="false"
+        @update:modelValue="sendDatesRange"
+      />
     </div>
   </div>
 </template>

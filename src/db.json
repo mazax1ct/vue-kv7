@@ -246,202 +246,433 @@
   ],
   "notices": [
     {
-      "id": "1",
+      "id": "2",
       "timezone": "-1",
+      "start": "02:00",
+      "end": "05:00"
+    },
+    {
+      "id": "3",
+      "timezone": "0",
       "start": "01:00",
-      "end": "02:00"
-    }
-  ],
-  "departments": [
+      "end": "04:00"
+    },
+    {
+      "id": "4",
+      "timezone": "-1",
+      "start": "02:00",
+      "end": "12:00"
+    },
     {
       "id": "5",
-      "device_name": "Грозный",
+      "timezone": "1",
+      "start": "01:00",
+      "end": "16:00"
+    }
+  ],
+  "worktime": [
+    {
+      "id": "5",
+      "type": "dept",
+      "dept_device": "Грозный",
+      "dept_name": "Очень Грозный",
       "name": "",
       "timezone": "0",
-      "work_time": "Ежедневно",
+      "worktime": "Ежедневно",
       "work_intervals_short": [
         {
-          "day_start": 0,
+          "day_start": "1",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "day_end": "7"
         }
       ],
+      "all_week": false,
+      "all_week_start": "09:00",
+      "all_week_end": "21:00",
       "work_intervals_full": [
         {
-          "day_num": 1,
+          "day_num": "1",
           "work_start": "08:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "weekend": false
         },
         {
-          "day_num": 2,
+          "day_num": "2",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "weekend": false
         },
         {
-          "day_num": 3,
+          "day_num": "3",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "weekend": false
         },
         {
-          "day_num": 4,
+          "day_num": "4",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "weekend": false
         },
         {
-          "day_num": 5,
+          "day_num": "5",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "weekend": false
         },
         {
-          "day_num": 6,
+          "day_num": "6",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "weekend": false
         },
         {
-          "day_num": 7,
+          "day_num": "7",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "weekend": false
+        }
+      ],
+      "dept_set_to_all": false
+    },
+    {
+      "id": "5",
+      "type": "worker",
+      "worker_name": "Зарема",
+      "worker_last_name": "Адамова",
+      "worker_second_name": "Шабовна",
+      "worker_job": "Администратор магазина",
+      "worker_department_id": "5",
+      "worker_worktime_like_unit": true,
+      "worktime": "",
+      "work_intervals_short": [
+        {
+          "day_start": "1",
+          "work_start": "09:00",
+          "work_end": "21:00",
+          "day_end": "7"
+        }
+      ],
+      "all_week": true,
+      "all_week_start": "09:00",
+      "all_week_end": "21:00",
+      "work_intervals_full": [
+        {
+          "day_num": "1",
+          "work_start": "09:00",
+          "work_end": "21:00",
+          "weekend": false
+        },
+        {
+          "day_num": "2",
+          "work_start": "09:00",
+          "work_end": "21:00",
+          "weekend": false
+        },
+        {
+          "day_num": "3",
+          "work_start": "09:00",
+          "work_end": "21:00",
+          "weekend": false
+        },
+        {
+          "day_num": "4",
+          "work_start": "09:00",
+          "work_end": "21:00",
+          "weekend": false
+        },
+        {
+          "day_num": "5",
+          "work_start": "09:00",
+          "work_end": "21:00",
+          "weekend": false
+        },
+        {
+          "day_num": "6",
+          "work_start": "09:00",
+          "work_end": "21:00",
+          "weekend": false
+        },
+        {
+          "day_num": "7",
+          "work_start": "09:00",
+          "work_end": "21:00",
+          "weekend": false
+        }
+      ]
+    },
+    {
+      "id": "25",
+      "type": "worker",
+      "worker_name": "Аминат",
+      "worker_last_name": "Вараева",
+      "worker_second_name": "Мухмадовна",
+      "worker_job": "Продавец- кассир",
+      "worker_department_id": "5",
+      "worker_worktime_like_unit": false,
+      "worktime": "2/2-1",
+      "work_intervals_short": [
+        {
+          "day_start": "1",
+          "work_start": "09:00",
+          "work_end": "18:00",
+          "day_end": "7"
+        }
+      ],
+      "all_week": true,
+      "all_week_start": "09:00",
+      "all_week_end": "18:00",
+      "work_intervals_full": [
+        {
+          "day_num": "1",
+          "work_start": "09:00",
+          "work_end": "18:00",
+          "weekend": false
+        },
+        {
+          "day_num": "2",
+          "work_start": "09:00",
+          "work_end": "18:00",
+          "weekend": false
+        },
+        {
+          "day_num": "3",
+          "work_start": "09:00",
+          "work_end": "18:00",
+          "weekend": false
+        },
+        {
+          "day_num": "4",
+          "work_start": "09:00",
+          "work_end": "18:00",
+          "weekend": false
+        },
+        {
+          "day_num": "5",
+          "work_start": "09:00",
+          "work_end": "18:00",
+          "weekend": false
+        },
+        {
+          "day_num": "6",
+          "work_start": "09:00",
+          "work_end": "18:00",
+          "weekend": false
+        },
+        {
+          "day_num": "7",
+          "work_start": "09:00",
+          "work_end": "18:00",
+          "weekend": false
         }
       ]
     },
     {
       "id": "14",
-      "device_name": "Екатеринбург",
+      "type": "dept",
+      "dept_device": "Екатеринбург",
+      "dept_name": "",
       "name": "",
       "timezone": "2",
       "work_time": "Ежедневно",
       "work_intervals_short": [
         {
-          "day_start": 0,
+          "day_start": "1",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "day_end": "7"
         }
       ],
+      "all_week": true,
+      "all_week_start": "09:00",
+      "all_week_end": "21:00",
       "work_intervals_full": [
         {
-          "day_num": 1,
+          "day_num": "1",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "weekend": false
         },
         {
-          "day_num": 2,
+          "day_num": "2",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "weekend": false
         },
         {
-          "day_num": 3,
+          "day_num": "3",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "weekend": false
         },
         {
-          "day_num": 4,
+          "day_num": "4",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "weekend": false
         },
         {
-          "day_num": 5,
+          "day_num": "5",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "weekend": false
         },
         {
-          "day_num": 6,
+          "day_num": "6",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "weekend": false
         },
         {
-          "day_num": 7,
+          "day_num": "7",
           "work_start": "09:00",
-          "work_end": "21:00"
+          "work_end": "21:00",
+          "weekend": false
         }
-      ]
+      ],
+      "dept_set_to_all": false
     },
     {
       "id": "25",
-      "device_name": "ПВЗ Майкоп",
+      "type": "dept",
+      "dept_device": "ПВЗ Майкоп",
+      "dept_name": "",
       "name": "",
       "timezone": "0",
-      "work_time": "",
+      "worktime": "",
       "work_intervals_short": [
         {
-          "day_start": 2,
+          "day_start": "2",
           "work_start": "11:00",
           "work_end": "18:00",
-          "day_end": 5
+          "day_end": "5"
         },
         {
-          "day_start": 6,
+          "day_start": "6",
           "work_start": "11:00",
           "work_end": "16:00"
         }
       ],
+      "all_week": false,
+      "all_week_start": "",
+      "all_week_end": "",
       "work_intervals_full": [
         {
-          "day_num": 2,
-          "work_start": "11:00",
-          "work_end": "18:00"
+          "day_num": "1",
+          "work_start": "",
+          "work_end": "",
+          "weekend": true
         },
         {
-          "day_num": 3,
+          "day_num": "2",
           "work_start": "11:00",
-          "work_end": "18:00"
+          "work_end": "18:00",
+          "weekend": false
         },
         {
-          "day_num": 4,
+          "day_num": "3",
           "work_start": "11:00",
-          "work_end": "18:00"
+          "work_end": "18:00",
+          "weekend": false
         },
         {
-          "day_num": 5,
+          "day_num": "4",
           "work_start": "11:00",
-          "work_end": "18:00"
+          "work_end": "18:00",
+          "weekend": false
         },
         {
-          "day_num": 6,
+          "day_num": "5",
           "work_start": "11:00",
-          "work_end": "16:00"
-        }
-      ]
-    }
-  ],
-  "workers": [
-    {
-      "id": "5",
-      "name": "Зарема",
-      "last_name": "Адамова",
-      "second_name": "Шабовна",
-      "job": "Администратор магазина",
-      "department_id": 5,
-      "work_time": "",
-      "work_intervals_short": [
+          "work_end": "18:00",
+          "weekend": false
+        },
         {
-          "day_start": 0,
-          "work_start": "09:00",
-          "work_end": "18:00"
+          "day_num": "6",
+          "work_start": "11:00",
+          "work_end": "16:00",
+          "weekend": false
+        },
+        {
+          "day_num": "7",
+          "work_start": "",
+          "work_end": "",
+          "weekend": true
         }
       ],
-      "work_intervals_full": []
-    },
-    {
-      "id": "25",
-      "name": "Аминат",
-      "last_name": "Вараева",
-      "second_name": "Мухмадовна",
-      "job": "Продавец- кассир",
-      "department_id": 5,
-      "work_time": "2/2-1",
-      "work_intervals_short": [],
-      "work_intervals_full": []
+      "dept_set_to_all": false
     },
     {
       "id": "50",
-      "name": "Элана",
-      "last_name": "Сташ",
-      "second_name": "",
-      "job": "Продавец-Кассир ПВЗ Майкоп",
-      "department_id": 25,
-      "work_time": "",
-      "work_intervals_short": [],
-      "work_intervals_full": []
+      "type": "worker",
+      "worker_name": "Элана",
+      "worker_last_name": "Сташ",
+      "worker_second_name": "",
+      "worker_job": "Продавец-Кассир ПВЗ Майкоп",
+      "worker_department_id": "25",
+      "worker_worktime_like_unit": true,
+      "worktime": "",
+      "work_intervals_short": [
+        {
+          "day_start": "2",
+          "work_start": "11:00",
+          "work_end": "18:00",
+          "day_end": "5"
+        },
+        {
+          "day_start": "6",
+          "work_start": "11:00",
+          "work_end": "16:00"
+        }
+      ],
+      "all_week": false,
+      "all_week_start": "",
+      "all_week_end": "",
+      "work_intervals_full": [
+        {
+          "day_num": "1",
+          "work_start": "",
+          "work_end": "",
+          "weekend": true
+        },
+        {
+          "day_num": "2",
+          "work_start": "11:00",
+          "work_end": "18:00",
+          "weekend": false
+        },
+        {
+          "day_num": "3",
+          "work_start": "11:00",
+          "work_end": "18:00",
+          "weekend": false
+        },
+        {
+          "day_num": "4",
+          "work_start": "11:00",
+          "work_end": "18:00",
+          "weekend": false
+        },
+        {
+          "day_num": "5",
+          "work_start": "11:00",
+          "work_end": "18:00",
+          "weekend": false
+        },
+        {
+          "day_num": "6",
+          "work_start": "11:00",
+          "work_end": "16:00",
+          "weekend": false
+        },
+        {
+          "day_num": "7",
+          "work_start": "",
+          "work_end": "",
+          "weekend": true
+        }
+      ]
     }
   ]
 }

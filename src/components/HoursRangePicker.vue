@@ -1,52 +1,38 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import Select from 'primevue/select'
 import { HOURS } from '@/constants'
 
 //принимаемые извне параметры
-const props = defineProps({
-  id: {
-    type: String,
-  },
-  start: {
-    type: String,
-  },
-  end: {
-    type: String,
-  },
-  start_title: {
-    type: String,
-    required: true,
-  },
-  end_title: {
-    type: String,
-    required: true,
-  },
-  error_text: {
-    type: String,
-    required: true,
-  },
-})
+const props = defineProps<{
+  id?: string
+  start?: string
+  end?: string
+  start_title: string
+  end_title: string
+  error_text: string
+}>()
 
 //выбрасываемое событие
 const emit = defineEmits(['sendHoursRange', 'sendHoursRangeError'])
 
-const id = ref(props.id)
+const id = ref<string>(props.id || '')
 
-const start = ref(props.start)
+const start = ref<string>(props.start || '')
 
-const end = ref(props.end)
+const end = ref<string>(props.end || '')
 
-const isError = ref()
+const isError = ref<boolean>()
 
-const startEndValidation = (start, end) => {
-  if (HOURS.indexOf(start) >= HOURS.indexOf(end)) {
-    isError.value = true
-  } else {
-    isError.value = false
+const startEndValidation = (start: string, end: string) => {
+  if (start !== undefined && end !== undefined) {
+    if (HOURS.indexOf(start) >= HOURS.indexOf(end)) {
+      isError.value = true
+    } else {
+      isError.value = false
+    }
   }
 }
-
 
 const sendHoursRange = () => {
   const range = {
@@ -57,7 +43,7 @@ const sendHoursRange = () => {
   emit('sendHoursRange', range)
 }
 
-const sendHoursRangeError = (id) => {
+const sendHoursRangeError = (id: string) => {
   const error = {
     id: id,
     state: isError.value,
@@ -88,7 +74,7 @@ onMounted(() => {
         @change="
           () => {
             startEndValidation(start, end)
-            sendHoursRange(start, end)
+            sendHoursRange()
             sendHoursRangeError('hoursRange_' + id)
           }
         "
@@ -108,7 +94,7 @@ onMounted(() => {
         @change="
           () => {
             startEndValidation(start, end)
-            sendHoursRange(start, end)
+            sendHoursRange()
             sendHoursRangeError('hoursRange_' + id)
           }
         "

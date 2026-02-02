@@ -21,7 +21,7 @@ const noticesStore = useNoticesStore() //получаем доступ к сто
 
 const { isLoading, notices, error } = storeToRefs(noticesStore) //деструктуризация данных из стора
 
-const { fetchNotices, getNotice, updateNotice, createNotice, deleteNotice } = noticesStore
+const { fetchNotices, updateNotice, createNotice, deleteNotice } = noticesStore
 
 //уведомление об обновлении данных
 const toast = useToast()
@@ -30,31 +30,27 @@ const notification = (severity: string, summary: string, detail: string) => {
   toast.add({ severity: severity, summary: summary, detail: detail, life: 3000 })
 }
 
-const noticeDefault = ref<Notice>({
+const isProcess = ref<boolean>(false) //отметка о действии по кнопке
+
+const visible = ref<boolean>(false) //отметка о видимости диалога
+
+const dialogHeader = ref<string>('') //заголовок диалога
+
+const currentNotice = ref<Notice>({
   id: '',
   timezone: '',
   start: '',
   end: '',
 })
 
-const isProcess = ref<boolean>(false) //отметка о действии по кнопке
-
-const visible = ref<boolean>(false) //отметка о видимости диалога
-
-const currentNoticeId = ref<string>('') //id уведомления
-
-const dialogHeader = ref<string>('') //заголовок диалога
-
 //функция обновления данных в попапе
-const updateNoticeDialogOnOpen = (id?: string) => {
-  if (id) {
+const updateNoticeDialogOnOpen = (notice?: Notice) => {
+  if (notice !== undefined) {
     dialogHeader.value = 'Редактирование'
-
-    currentNoticeId.value = id
+    currentNotice.value = notice
   } else {
     dialogHeader.value = 'Создание записи'
-    currentNoticeId.value = ''
-    noticeDefault.value = {
+    currentNotice.value = {
       id: '',
       timezone: '',
       start: '',
@@ -69,7 +65,7 @@ const recieveCloseDialog = () => {
   visible.value = !visible.value
 }
 
-const recieveUpdateNotice = async(notice: Notice) => {
+const recieveUpdateNotice = async (notice: Notice) => {
   await updateNotice(notice)
 
   notification('info', 'Информация', 'Запись обновлена')
@@ -77,7 +73,7 @@ const recieveUpdateNotice = async(notice: Notice) => {
   visible.value = false
 }
 
-const recieveCreateNotice = async(notice: Notice) => {
+const recieveCreateNotice = async (notice: Notice) => {
   await createNotice(notice)
 
   notification('success', 'Информация', 'Запись добавлена')
@@ -85,8 +81,8 @@ const recieveCreateNotice = async(notice: Notice) => {
   visible.value = false
 }
 
-const recieveDeleteNotice = async() => {
-  await deleteNotice(currentNoticeId.value)
+const recieveDeleteNotice = async (notice: Notice) => {
+  await deleteNotice(notice.id)
 
   notification('error', 'Информация', 'Запись удалена')
 
@@ -150,7 +146,7 @@ onMounted(async () => {
               variant="outlined"
               label="Редактировать"
               :loading="isProcess"
-              @click="updateNoticeDialogOnOpen(slotProps.data.id)"
+              @click="updateNoticeDialogOnOpen(slotProps.data)"
             />
           </template>
         </Column>
@@ -170,7 +166,7 @@ onMounted(async () => {
           @sendUpdateNotice="recieveUpdateNotice"
           @sendCreateNotice="recieveCreateNotice"
           @sendDeleteNotice="recieveDeleteNotice"
-          :notice="currentNoticeId ? getNotice(currentNoticeId) : noticeDefault"
+          :noticeItem="currentNotice"
         />
       </Dialog>
     </div>
