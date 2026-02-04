@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import Select from 'primevue/select'
 import { HOURS } from '@/constants'
 
 //принимаемые извне параметры
 const props = defineProps<{
   id?: string
+  day_num?: string
   start?: string
   end?: string
   start_title: string
@@ -40,22 +41,26 @@ const sendHoursRange = () => {
     end: end.value,
   }
 
-  emit('sendHoursRange', range)
+  emit('sendHoursRange', range, props.day_num)
 }
 
-const sendHoursRangeError = (id: string) => {
+const sendHoursRangeError = (id: string, del: boolean = false) => {
   const error = {
     id: id,
     state: isError.value,
   }
 
-  emit('sendHoursRangeError', error)
+  emit('sendHoursRangeError', error, del)
 }
 
 onMounted(() => {
   startEndValidation(start.value, end.value)
   sendHoursRange()
   sendHoursRangeError('hoursRange_' + id.value)
+})
+
+onUnmounted(() => {
+  sendHoursRangeError('hoursRange_' + id.value, true)
 })
 </script>
 

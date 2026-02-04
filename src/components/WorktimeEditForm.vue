@@ -12,7 +12,7 @@ const props = defineProps<{
   worktimeItem: Worktime
 }>()
 
-const emit = defineEmits(['sendCloseDialog'])
+const emit = defineEmits(['sendCloseDialog', 'sendUpdateWorktime'])
 
 //локальная копия входящего объекта чтобы реактивно не менялась таблица
 const localObject = ref<Worktime>({
@@ -25,23 +25,42 @@ const isDisabled = computed(() => {
   return errors.value.some((item) => item.state === true)
 })
 
-const recieveHoursRange = (range: HoursRange) => {
-  /*localObject.value.start = range.start
-  localObject.value.end = range.end*/
+const sendCloseDialog = () => {
+  emit('sendCloseDialog')
 }
 
-const recieveHoursRangeError = (error: HoursRangeError) => {
-  const err = errors.value.find((el) => el.id === error.id)
+const sendUpdateWorktime = () => {
+  emit('sendUpdateWorktime', localObject.value)
+}
 
-  if (!err) {
-    errors.value.push(error)
+const recieveHoursRange = (range: HoursRange, day_num: string) => {
+  if (day_num) {
+    const day = localObject.value.work_intervals_full.find(el => el.day_num === day_num)
+    if (day) {
+      day.work_start = range.start
+      day.work_end = range.end
+    }
   } else {
-    err.state = error.state
+    localObject.value.all_week_start = range.start
+    localObject.value.all_week_end = range.end
   }
 }
 
-const sendCloseDialog = () => {
-  emit('sendCloseDialog')
+const recieveHoursRangeError = (error: HoursRangeError, del: boolean) => {
+  const err = errors.value.find((el) => el.id === error.id)
+
+  if(!del) {
+    if (!err) {
+      errors.value.push(error)
+    } else {
+      err.state = error.state
+    }
+  } else {
+    const index = errors.value.findIndex(el => el.id === error.id);
+    if (index !== -1) {
+      errors.value.splice(index, 1);
+    }
+  }
 }
 
 const loading = ref<boolean>(false)
@@ -51,12 +70,12 @@ watch(
   (newObject: Worktime) => {
     localObject.value = { ...newObject }
   },
-  { deep: true },
+  //{ deep: true },
 )
 </script>
 
 <template>
-  <div v-if="props.worktimeItem.type === 'worker'" class="mb-4">
+  <div v-if="localObject.type === 'worker'" class="mb-4">
     <div class="mb-4">
       <label class="block mb-1" for="worker_last_name">Фамилия сотрудника</label>
 
@@ -94,7 +113,7 @@ watch(
     </div>
   </div>
 
-  <div v-if="props.worktimeItem.type === 'dept'" class="mb-4">
+  <div v-if="localObject.type === 'dept'" class="mb-4">
     <div class="mb-4">
       <label class="block mb-1" for="dept_device">Код подразделения</label>
 
@@ -153,62 +172,7 @@ watch(
 
   <p class="mb-2 text-sm font-semibold">Время работы</p>
 
-  <div class="flex items-center gap-2 mb-2">
-    <Checkbox
-      v-model="localObject.all_week"
-      binary
-      inputId="all_week"
-      name="all_week"
-    />
-    <label for="all_week">Вся неделя</label>
-  </div>
-
-  <div v-show="localObject.all_week" class="mb-4">
-    <HoursRangePicker
-      @sendHoursRange="recieveHoursRange"
-      @sendHoursRangeError="recieveHoursRangeError"
-      :id="'all_week'"
-      :start="localObject.all_week_start"
-      :end="localObject.all_week_end"
-      start_title="Начало рабочего дня"
-      end_title="Конец рабочего дня"
-      error_text="Ошибка! Время начала рабочего дня не может быть равно или больше времени конца рабочего дня!"
-    />
-  </div>
-
-  <div v-show="!localObject.all_week" class="mb-4">
-    <p class="mb-2 text-sm font-semibold">График по дням</p>
-
-    <div v-for="day in localObject.work_intervals_full" :key="day.day_num" class="mb-2">
-      <div class="flex gap-2">
-        <p class="w-50 font-semibold">{{ DAYS[Number(day.day_num) - 1] }}</p>
-
-        <div class="flex items-center gap-2">
-          <Checkbox
-            v-model="day.weekend"
-            binary
-            :inputId="'day_' + day.day_num"
-            :name="'day_' + day.day_num"
-          />
-          <label :for="'day_' + day.day_num">Выходной</label>
-        </div>
-      </div>
-
-      <div v-if="!day.weekend" class="mt-2">
-        <HoursRangePicker
-          @sendHoursRange="recieveHoursRange"
-          :id="'day_' + day.day_num"
-          :start="day.work_start"
-          :end="day.work_end"
-          start_title="Начало рабочего дня"
-          end_title="Конец рабочего дня"
-          error_text="Ошибка! Время начала рабочего дня не может быть равно или больше времени конца рабочего дня!"
-        />
-      </div>
-    </div>
-  </div>
-
-  <div v-if="props.worktimeItem.type === 'worker'" class="flex items-center gap-2 mb-2">
+  <div v-if="localObject.type === 'worker'" class="flex items-center gap-2 mb-2">
     <Checkbox
       v-model="localObject.worker_worktime_like_unit"
       binary
@@ -216,6 +180,67 @@ watch(
       name="worker_worktime_like_unit"
     />
     <label for="worker_worktime_like_unit">Как в подразделении</label>
+  </div>
+
+  <div v-if="!localObject.worker_worktime_like_unit">
+
+    <div class="flex items-center gap-2 mb-2">
+      <Checkbox
+        v-model="localObject.all_week"
+        binary
+        inputId="all_week"
+        name="all_week"
+      />
+      <label for="all_week">Вся неделя</label>
+    </div>
+
+    <div v-if="localObject.all_week" class="mb-4">
+      <HoursRangePicker
+        @sendHoursRange="recieveHoursRange"
+        @sendHoursRangeError="recieveHoursRangeError"
+        :id="'all_week'"
+        :start="localObject.all_week_start"
+        :end="localObject.all_week_end"
+        start_title="Начало рабочего дня"
+        end_title="Конец рабочего дня"
+        error_text="Ошибка! Время начала рабочего дня не может быть равно или больше времени конца рабочего дня!"
+      />
+    </div>
+
+    <div v-else class="mb-4">
+      <p class="mb-2 text-sm font-semibold">График по дням</p>
+
+      <div v-for="day in localObject.work_intervals_full" :key="day.day_num" class="mb-2">
+        <div class="flex gap-2">
+          <p class="w-50 font-semibold">{{ DAYS[Number(day.day_num) - 1] }}</p>
+
+          <div class="flex items-center gap-2">
+            <Checkbox
+              v-model="day.weekend"
+              binary
+              :inputId="'day_' + day.day_num"
+              :name="'day_' + day.day_num"
+            />
+            <label :for="'day_' + day.day_num">Выходной</label>
+          </div>
+        </div>
+
+        <div v-if="!day.weekend" class="mt-2">
+          <HoursRangePicker
+            @sendHoursRange="recieveHoursRange"
+            @sendHoursRangeError="recieveHoursRangeError"
+            :id="'day_' + day.day_num"
+            :day_num="day.day_num"
+            :start="day.work_start"
+            :end="day.work_end"
+            start_title="Начало рабочего дня"
+            end_title="Конец рабочего дня"
+            error_text="Ошибка! Время начала рабочего дня не может быть равно или больше времени конца рабочего дня!"
+          />
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <div v-if="props.worktimeItem.type === 'dept'" class="flex items-center gap-2 mb-4">
@@ -245,6 +270,7 @@ watch(
       label="Сохранить"
       :disabled="isDisabled"
       :loading="loading"
+      @click="sendUpdateWorktime()"
     />
   </div>
 </template>

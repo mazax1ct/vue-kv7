@@ -11,6 +11,9 @@ import Row from 'primevue/row'
 import Dialog from 'primevue/dialog'
 import WorktimeEditForm from '@/components/WorktimeEditForm.vue'
 
+import Toast from 'primevue/toast'
+import { useToast } from 'primevue/usetoast'
+
 import { DAYS_NUM_NAMES } from '@/constants'
 import type { Worktime } from '@/types/types'
 
@@ -21,7 +24,14 @@ const worktimeStore = useWorktimeStore() //получаем доступ к ст
 
 const { isLoading, worktime, error } = storeToRefs(worktimeStore) //деструктуризация данных из стора
 
-const { fetchWorktime } = worktimeStore
+const { fetchWorktime, updateWortime } = worktimeStore
+
+//уведомление об обновлении данных
+const toast = useToast()
+
+const notification = (severity: string, summary: string, detail: string) => {
+  toast.add({ severity: severity, summary: summary, detail: detail, life: 3000 })
+}
 
 const visible = ref(false) //отметка о видимости диалога
 
@@ -35,6 +45,14 @@ const updateWorktimeDialogOnOpen = (worktime: Worktime) => {
 
 const recieveCloseDialog = () => {
   visible.value = !visible.value
+}
+
+const recieveUpdateWorktime = async (worktime: Worktime) => {
+  await updateWortime(worktime)
+
+  notification('info', 'Информация', 'Запись обновлена')
+
+  visible.value = false
 }
 
 //получаем данные на маунт приложения
@@ -105,9 +123,7 @@ onMounted(async () => {
               <tr v-for="row in data.work_intervals_short" :key="row.work_intervals_short">
                 <td>
                   {{
-                    row.day_end
-                      ? DAYS_NUM_NAMES[row.day_start] + '-' + DAYS_NUM_NAMES[row.day_end]
-                      : DAYS_NUM_NAMES[row.day_start]
+                    row.work_start && row.work_end ? row.day_end !== row.day_start ? DAYS_NUM_NAMES[row.day_start] + '-' + DAYS_NUM_NAMES[row.day_end] : DAYS_NUM_NAMES[row.day_start] : ''
                   }}
                 </td>
                 <td>{{ row.work_start }}</td>
@@ -133,6 +149,8 @@ onMounted(async () => {
       </Column>
     </DataTable>
 
+    <Toast />
+
     <Dialog
       v-model:visible="visible"
       modal
@@ -143,6 +161,7 @@ onMounted(async () => {
       <WorktimeEditForm
         v-if="currentWorktime"
         @sendCloseDialog="recieveCloseDialog"
+        @sendUpdateWorktime="recieveUpdateWorktime"
         :worktimeItem="currentWorktime"
       />
     </Dialog>
