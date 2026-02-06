@@ -24,7 +24,7 @@ const worktimeStore = useWorktimeStore() //получаем доступ к ст
 
 const { isLoading, worktime, error } = storeToRefs(worktimeStore) //деструктуризация данных из стора
 
-const { fetchWorktime, updateWortime } = worktimeStore
+const { fetchWorktime, updateWorktime } = worktimeStore
 
 //уведомление об обновлении данных
 const toast = useToast()
@@ -48,7 +48,7 @@ const recieveCloseDialog = () => {
 }
 
 const recieveUpdateWorktime = async (worktime: Worktime) => {
-  await updateWortime(worktime)
+  await updateWorktime(worktime)
 
   notification('info', 'Информация', 'Запись обновлена')
 
@@ -120,7 +120,7 @@ onMounted(async () => {
         <template #body="{ data }">
           <table class="p-datatable-table">
             <tbody class="p-datatable-tbody">
-              <tr v-for="row in data.work_intervals_short" :key="row.work_intervals_short">
+              <tr v-for="row in data.work_intervals" :key="row.day_start">
                 <td>
                   {{
                     row.work_start && row.work_end ? row.day_end !== row.day_start ? DAYS_NUM_NAMES[row.day_start] + '-' + DAYS_NUM_NAMES[row.day_end] : DAYS_NUM_NAMES[row.day_start] : ''

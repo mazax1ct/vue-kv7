@@ -35,7 +35,7 @@ const sendUpdateWorktime = () => {
 
 const recieveHoursRange = (range: HoursRange, day_num: string) => {
   if (day_num) {
-    const day = localObject.value.work_intervals_full.find(el => el.day_num === day_num)
+    const day = localObject.value.work_days.find(el => el.day_num === day_num)
     if (day) {
       day.work_start = range.start
       day.work_end = range.end
@@ -210,7 +210,7 @@ watch(
     <div v-else class="mb-4">
       <p class="mb-2 text-sm font-semibold">График по дням</p>
 
-      <div v-for="day in localObject.work_intervals_full" :key="day.day_num" class="mb-2">
+      <div v-for="day in localObject.work_days" :key="day.day_num" class="mb-2">
         <div class="flex gap-2">
           <p class="w-50 font-semibold">{{ DAYS[Number(day.day_num) - 1] }}</p>
 

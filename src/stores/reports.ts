@@ -2,25 +2,27 @@ import { ref, computed } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '@/constants.ts'
 import { defineStore } from 'pinia'
-import type {Mark} from '@/types/types'
+import type {Report} from '@/types/types'
 
-export const useMarksStore = defineStore('marks', () => {
-  const marks = ref<Mark[]>([])
+export const useReportsStore = defineStore('reports', () => {
+  const reports = ref<Report[]>([])
   const isLoading = ref<boolean>(false)
   const error = ref<Error | null>(null)
 
-  async function fetchMarks(params: object) {
+  async function fetchReports(params: object) {
     isLoading.value = true
     error.value = null
 
     try {
-      const { data } = await axios.get<Mark[]>(
-        `${API_BASE_URL}/marks`, {
+      const { data } = await axios.get<Report[]>(
+        `${API_BASE_URL}/reports`, {
           params
         }
       )
 
-      marks.value = data
+      reports.value = data
+
+      console.log(reports.value)
 
       console.log('данные в сторе загружены')
     } catch (err) {
@@ -36,14 +38,14 @@ export const useMarksStore = defineStore('marks', () => {
   }
 
   const isLoaded = computed((): boolean => {
-    return marks.value.length > 0
+    return reports.value.length > 0
   })
 
   return {
-    marks,
+    reports,
     isLoading,
     isLoaded,
     error,
-    fetchMarks,
+    fetchReports,
   }
 })

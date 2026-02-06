@@ -14,7 +14,7 @@ export const useNoticesStore = defineStore('notices', () => {
     error.value = null
 
     try {
-      const { data } = await axios.get(`${API_BASE_URL}/notices`)
+      const { data } = await axios.get<Notice[]>(`${API_BASE_URL}/notices`)
 
       notices.value = data
 

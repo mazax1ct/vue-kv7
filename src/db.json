@@ -246,12 +246,6 @@
   ],
   "notices": [
     {
-      "id": "2",
-      "timezone": "-1",
-      "start": "02:00",
-      "end": "05:00"
-    },
-    {
       "id": "3",
       "timezone": "0",
       "start": "01:00",
@@ -268,6 +262,12 @@
       "timezone": "1",
       "start": "01:00",
       "end": "16:00"
+    },
+    {
+      "id": "6",
+      "timezone": "-1",
+      "start": "01:00",
+      "end": "02:00"
     }
   ],
   "worktime": [
@@ -277,23 +277,29 @@
       "dept_device": "Грозный",
       "dept_name": "Очень Грозный",
       "name": "",
-      "timezone": "0",
-      "worktime": "",
-      "work_intervals_short": [
+      "timezone": "2",
+      "worktime": "111",
+      "work_intervals": [
         {
           "day_start": "1",
           "day_end": "1",
-          "work_start": "11:00",
+          "work_start": "01:00",
+          "work_end": "04:00"
+        },
+        {
+          "day_start": "2",
+          "day_end": "2",
+          "work_start": "03:00",
           "work_end": "21:00"
         },
         {
           "day_start": "3",
-          "day_end": "4",
-          "work_start": "09:00",
+          "day_end": "3",
+          "work_start": "04:00",
           "work_end": "21:00"
         },
         {
-          "day_start": "6",
+          "day_start": "4",
           "day_end": "7",
           "work_start": "09:00",
           "work_end": "21:00"
@@ -302,7 +308,7 @@
       "all_week": false,
       "all_week_start": "09:00",
       "all_week_end": "21:00",
-      "work_intervals_full": [
+      "work_days": [
         {
           "day_num": "1",
           "work_start": "01:00",
@@ -358,11 +364,11 @@
       "worker_department_id": "5",
       "worker_worktime_like_unit": false,
       "worktime": "каждый день",
-      "work_intervals_short": [],
+      "work_intervals": [],
       "all_week": true,
       "all_week_start": "09:00",
       "all_week_end": "21:00",
-      "work_intervals_full": [
+      "work_days": [
         {
           "day_num": "1",
           "work_start": "09:00",
@@ -417,11 +423,11 @@
       "worker_department_id": "5",
       "worker_worktime_like_unit": false,
       "worktime": "2/2-1",
-      "work_intervals_short": [],
+      "work_intervals": [],
       "all_week": true,
       "all_week_start": "09:00",
       "all_week_end": "18:00",
-      "work_intervals_full": [
+      "work_days": [
         {
           "day_num": "1",
           "work_start": "09:00",
@@ -474,11 +480,11 @@
       "name": "",
       "timezone": "2",
       "work_time": "Ежедневно",
-      "work_intervals_short": [],
+      "work_intervals": [],
       "all_week": true,
       "all_week_start": "09:00",
       "all_week_end": "21:00",
-      "work_intervals_full": [
+      "work_days": [
         {
           "day_num": "1",
           "work_start": "09:00",
@@ -532,11 +538,11 @@
       "name": "",
       "timezone": "0",
       "worktime": "",
-      "work_intervals_short": [],
+      "work_intervals": [],
       "all_week": false,
       "all_week_start": "",
       "all_week_end": "",
-      "work_intervals_full": [
+      "work_days": [
         {
           "day_num": "1",
           "work_start": "",
@@ -592,7 +598,7 @@
       "worker_department_id": "25",
       "worker_worktime_like_unit": false,
       "worktime": "",
-      "work_intervals_short": [
+      "work_intervals": [
         {
           "day_start": "2",
           "day_end": "5",
@@ -609,7 +615,7 @@
       "all_week": false,
       "all_week_start": "",
       "all_week_end": "",
-      "work_intervals_full": [
+      "work_days": [
         {
           "day_num": "1",
           "work_start": "",
@@ -662,7 +668,7 @@
       "name": "",
       "timezone": "0",
       "worktime": "",
-      "work_intervals_short": [
+      "work_intervals": [
         {
           "day_start": "1",
           "day_end": "5",
@@ -673,7 +679,7 @@
       "all_week": false,
       "all_week_start": "08:00",
       "all_week_end": "18:00",
-      "work_intervals_full": [
+      "work_days": [
         {
           "day_num": "1",
           "work_start": "01:00",
@@ -718,6 +724,65 @@
         }
       ],
       "dept_set_to_all": false
+    }
+  ],
+  "reports": [
+    {
+      "id": "1",
+      "date": 1769912110,
+      "day": "Воскресенье",
+      "location": "ПВЗ Якутск",
+      "timezone": "0",
+      "name": "Новгородова Ньургуйаана",
+      "position": "Продавец кассир ПВЗ Якутск",
+      "check_time": "09:15:32",
+      "msk_time": "05:15:32"
+    },
+    {
+      "id": "2",
+      "date": 1769913361,
+      "day": "Воскресенье",
+      "location": "Рубцовск",
+      "timezone": "4",
+      "name": "Воробьева Елена",
+      "position": "Продавец кассир /в г.Рубцовск/",
+      "check_time": "09:36:01",
+      "msk_time": "05:36:01"
+    },
+    {
+      "id": "3",
+      "date": 1769923479,
+      "day": "Воскресенье",
+      "location": "Екатеринбург",
+      "timezone": "2",
+      "name": "Якунина Светлана",
+      "position": "Продавец кассир /г. Екатеринбург/",
+      "check_time": "10:24:39",
+      "msk_time": "08:24:39"
+    },
+    {
+      "id": "4",
+      "type": "alert",
+      "date": 1769959980,
+      "day": "Воскресенье",
+      "location": "",
+      "timezone": "0",
+      "name": "",
+      "position": "",
+      "check_time": "18:33:00",
+      "msk_time": "18:33:00"
+    },
+    {
+      "id": "5",
+      "type": "alert",
+      "date": 1770015600,
+      "day": "Понедельник",
+      "location": "",
+      "timezone": "0",
+      "name": "",
+      "position": "",
+      "check_time": "10:00:00",
+      "msk_time": "10:00:00"
     }
   ]
 }

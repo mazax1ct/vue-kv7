@@ -2,7 +2,7 @@ import { ref } from 'vue'
 import axios from 'axios'
 import { API_BASE_URL } from '@/constants'
 import { defineStore } from 'pinia'
-import type { PeriodDay, Worktime } from '@/types/types'
+import type { Interval, Worktime } from '@/types/types'
 
 export const useWorktimeStore = defineStore('worktime', () => {
   const worktime = ref<Worktime[]>([])
@@ -18,12 +18,12 @@ export const useWorktimeStore = defineStore('worktime', () => {
 
       //TODO: перенести на back
       const transData = data.map((item: Worktime) => {
-        const activeDays = item.work_intervals_full.filter((d) => d.weekend === false)
+        const activeDays = item.work_days.filter((d) => d.weekend === false)
       
-        const shortIntervals: PeriodDay[] = []
+        const shortIntervals: Interval[] = []
       
         if (activeDays.length > 0) {
-          let current: PeriodDay | null = null
+          let current: Interval | null = null
       
           activeDays.forEach((day) => {
             if (!current) {
@@ -62,7 +62,7 @@ export const useWorktimeStore = defineStore('worktime', () => {
       
         return {
           ...item,
-          work_intervals_short: shortIntervals,
+          work_intervals: shortIntervals,
         }
       })
 
@@ -81,7 +81,7 @@ export const useWorktimeStore = defineStore('worktime', () => {
     }
   }
 
-  async function updateWortime(worktimeObj: Worktime) {
+  async function updateWorktime(worktimeObj: Worktime) {
     isLoading.value = true
     error.value = null
 
@@ -108,6 +108,6 @@ export const useWorktimeStore = defineStore('worktime', () => {
     isLoading,
     error,
     fetchWorktime,
-    updateWortime
+    updateWorktime
   }
 })

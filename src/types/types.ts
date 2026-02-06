@@ -48,12 +48,12 @@ export type Worktime = {
   all_week: boolean
   all_week_start: string
   all_week_end: string
-  work_intervals_short: PeriodDay[]
-  work_intervals_full: Workday[]
+  work_intervals: Interval[]
+  work_days: Workday[]
   dept_set_to_all: boolean
 }
 
-export type PeriodDay = {
+export type Interval = {
   day_start: string
   day_end?: string
   work_start: string
@@ -75,4 +75,17 @@ export type HoursRange = {
 export type HoursRangeError = {
   id: string
   state: boolean
+}
+
+export type Report = {
+  id: string
+  type: string
+  date: Date
+  day: string
+  location: string
+  timezone: string
+  name: string
+  position: string
+  check_time: string
+  ms_time: string
 }
